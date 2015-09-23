@@ -108,9 +108,10 @@ lazySave <- function(..., lazyDir="lazyDir",
                                paste0("class:",is(obj))))
         }
 
+        md5Hash <- lazyLs(tag=paste0(file), archivistCol = "artifact")
       # Save the actual objects as lazy load databases  
         list2env(x = objList) %>%
-          tools:::makeLazyLoadDB(., file.path(lazyDir,"gallery", file))
+          tools:::makeLazyLoadDB(., file.path(lazyDir,"gallery", md5Hash))
       }
     })
   }
@@ -230,10 +231,10 @@ lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir",
         filter(artifact==md5Hash) %>%
         filter(grepl("filename:", tag)) %>%
         select(tag) 
-      
+      browser()
       # Test if it had a filename associated with it; if not, then load the rdx directly
       if(nchar(gsub(rasterFile, pattern="filename:",replacement = ""))==0) {
-        lazyLoad(file.path(lazyDir, "gallery", y), 
+        lazyLoad(file.path(lazyDir, "gallery", md5Hash), 
                  envir = envir)
       } else {
         rasterName <- gsub(rasterFile$tag, replacement = "", pattern="filename:")
@@ -241,8 +242,10 @@ lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir",
       }
       message(paste("Read Raster", y))
     } else {
+      browser()
+      md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir)
       
-      lazyLoad(file.path(lazyDir, "gallery", y), 
+      lazyLoad(file.path(lazyDir, "gallery", md5Hash), 
                envir = envir)
       message(paste("Read Object", y))
     }
