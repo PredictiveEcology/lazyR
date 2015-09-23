@@ -17,23 +17,27 @@ This creates an archivist repository.}
 \item{tagType}{Some tags have prefixes, such as "class:".
 The search can be thus within a tagType if this is specified}
 
-\item{archivistCol}{The name of the column to return from a showLocalRepo call. This is usually
-"tag" or "artifact".}
+\item{archivistCol}{The name of the column to return from a showLocalRepo call.
+This is usually "tag" or "artifact".}
 }
 \value{
 A character vector of object names that match the tag requested.
 }
 \description{
-This will simply list object names that are contained within an archivist lazy load
-database. The listing can be done with a tag.
+This will simply list object names that are contained within an archivist
+lazy load database. The listing can be done with a tag.
 }
 \examples{
+\dontrun{
+tmpdir <- normalizePath(file.path(tempdir(), "lazyDir"))
 a <- rnorm(10)
 b <- rnorm(20)
-lazySave(a,b,lazyDir="~/lazyDir")
+lazySave(a, b, lazyDir = tmpdir)
 lazyLs()
-lazyLs(tag="function")
-lazyLs(tag="numeric")
+lazyLs(tag = "function")
+lazyLs(tag = "numeric")
+unlink(tmpdir, recursive = TRUE)
+}
 }
 \author{
 Eliot McIntire

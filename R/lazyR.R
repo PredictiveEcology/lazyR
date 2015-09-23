@@ -1,5 +1,5 @@
 if (getRversion() >= "3.1.0") {
-  utils::globalVariables(c(".", "artifact", "raster", "tag"))
+  utils::globalVariables(c(".", "artifact", "lazyDir", "raster", "tag"))
 }
 
 ################################################################################
@@ -41,24 +41,24 @@ if (getRversion() >= "3.1.0") {
 #' \dontrun{
 #' lazySave(mget(ls()))
 #' }
-lazySave <- function(..., lazyDir="lazyDir",
-                     tags=NULL, clearRepo=FALSE,
+lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
                      overwrite=FALSE) {
   objList <- list(...)
-  file=NULL
+  file <- NULL
 
-  if (is(objList[[1]], "list"))
+  if (is(objList[[1]], "list")) {
     objList <- objList[[1]]
+  }
   if (!is.null(names(objList))) {
-    if (length(names(objList))==length(objList)){
-      file=names(objList)
+    if (length(names(objList)) == length(objList)) {
+      file <- names(objList)
     } else {
-      stop("If passing a list, it must be a named list")
+      stop("If passing a list, it must be a named list.")
     }
   }
 
   if (is.null(file)) {
-    file=sapply(as.list(substitute(list(...)))[-1L], deparse)
+    file <- sapply(as.list(substitute(list(...)))[-1L], deparse)
   }
   #objList <- list(obj)
   names(objList) <- file
@@ -74,19 +74,21 @@ lazySave <- function(..., lazyDir="lazyDir",
     if (clearRepo) {
       deleteRepo(lazyDir)
     }
-    if (!file.exists(file.path(lazyDir,"backpack.db"))) {
-      createEmptyRepo( lazyDir )
+    if (!file.exists(file.path(lazyDir, "backpack.db"))) {
+      createEmptyRepo(lazyDir)
     }
 
     lapply(1:length(objList), function(N) {
       shouldSave <- TRUE
       obj <- objList[[N]]
       file <- names(objList[N])
-      firstOne <- any(lazyLs(tag=paste0("objectName:",file),
-                                lazyDir=lazyDir)==file)
+      firstOne <- any(
+        lazyLs(tag = paste0("objectName:", file), lazyDir = lazyDir) == file
+      )
       if (firstOne) {
         if (!overwrite) {
-          message("Object ",file," is already in the database. Use overwrite=TRUE to replace it")
+          message("Object ", file, " is already in the database. ",
+                  "Use overwrite=TRUE to replace it")
           shouldSave <- FALSE
         } else {
           lazyRm(file)
@@ -100,7 +102,7 @@ lazySave <- function(..., lazyDir="lazyDir",
           saveToRepo(file, repoDir = lazyDir,
                      userTags = c(paste0("objectName:", file), tags,
                                  paste0("class:", is(obj)),
-                                 paste0("filename:",slot(slot(obj, "file"), "name"))
+                                 paste0("filename:", slot(slot(obj, "file"), "name"))
                                 ))
         } else {
           saveToRepo(file, repoDir = lazyDir,
@@ -110,13 +112,12 @@ lazySave <- function(..., lazyDir="lazyDir",
 
       # Save the actual objects as lazy load databases
         list2env(x = objList) %>%
-          tools:::makeLazyLoadDB(., file.path(lazyDir,"gallery", file))
+          tools:::makeLazyLoadDB(., file.path(lazyDir, "gallery", file))
       }
     })
   }
   return(invisible(names(objList)))
 }
-
 
 #' List contents of lazy load database, using a tag
 #'
@@ -145,12 +146,16 @@ lazySave <- function(..., lazyDir="lazyDir",
 #' @importFrom archivist showLocalRepo
 #' @importFrom magrittr %>%
 #' @examples
+#' \dontrun{
+#' tmpdir <- normalizePath(file.path(tempdir(), "lazyDir"))
 #' a <- rnorm(10)
 #' b <- rnorm(20)
-#' lazySave(a,b,lazyDir="~/lazyDir")
+#' lazySave(a, b, lazyDir = tmpdir)
 #' lazyLs()
-#' lazyLs(tag="function")
-#' lazyLs(tag="numeric")
+#' lazyLs(tag = "function")
+#' lazyLs(tag = "numeric")
+#' unlink(tmpdir, recursive = TRUE)
+#' }
 lazyLs <- function(tag=NULL, lazyDir="lazyDir",
                    tagType="objectName:",
                    archivistCol="tag") {
@@ -162,20 +167,20 @@ lazyLs <- function(tag=NULL, lazyDir="lazyDir",
 
     b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
       filter(grepl(pattern=tagType, tag)) %>%
-      select_("artifact",archivistCol)
+      select_("artifact", archivistCol)
 
     if (!is.null(tag)) {
 
       tag2 <- tag # creates confusion in dplyr because tag is a column name in
                   # showLocalRepo and an argument in this function
       a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-        filter(grepl(paste0(tagType,tag2,"$"), tag)) %>%
+        filter(grepl(paste0(tagType, tag2, "$"), tag)) %>%
         select_("artifact")
 
-      b <- left_join(a,b,by="artifact") %>%
-           distinct
+      b <- left_join(a, b, by="artifact") %>%
+        distinct
     }
-    gsub(x = b[,archivistCol], pattern = tagType, replacement = "")
+    gsub(x = b[, archivistCol], pattern = tagType, replacement = "")
 }
 
 #' Load lazy objects from a \code{lazyR} database
@@ -199,16 +204,19 @@ lazyLs <- function(tag=NULL, lazyDir="lazyDir",
 #' @importFrom magrittr %>%
 #' @examples
 #' \dontrun{
+#' tmpdir <- normalizePath(file.path(tempdir(), "lazyDir"))
 #' obj <- rnorm(10)
 #' # save the obj
-#' lazySave(obj, lazyDir="~/lazyDir")
+#' lazySave(obj, lazyDir=tmpdir)
 #' # remove the obj
 #' rm(obj)
 #' any(ls()=="obj") # Is FALSE
 #' # load it back in
-#' lazyLoad2("obj", lazyDir="~/lazyDir")
+#' lazyLoad2("obj", lazyDir=tmpdir)
 #' any(ls()=="obj") # Is TRUE
+#' unlink(tmpdir, recursive = TRUE)
 #' }
+#'
 lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir", envir=parent.frame()) {
 
   if (exists(".lazyDir", envir = .lazyREnv)) {
@@ -230,9 +238,8 @@ lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir", envir=parent.frame()) {
         select(tag)
 
       # Test if it had a filename associated with it; if not, then load the rdx directly
-      if (nchar(gsub(rasterFile, pattern="filename:",replacement = ""))==0) {
-        lazyLoad(file.path(lazyDir, "gallery", y),
-                 envir = envir)
+      if (nchar(gsub(rasterFile, pattern="filename:", replacement = ""))==0) {
+        lazyLoad(file.path(lazyDir, "gallery", y), envir = envir)
       } else {
         rasterName <- gsub(rasterFile$tag, replacement = "", pattern="filename:")
         assign(y, value=raster(rasterName), envir=envir)
@@ -284,8 +291,8 @@ lazyRm <- function(objNames=NULL, lazyDir="lazyDir") {
     toRm <- lazyLs(y, archivistCol = "artifact", lazyDir=lazyDir)
     if (length(toRm)>0) {
       rmFromRepo(toRm)
-      unlink(file.path(lazyDir, "gallery", paste0(y,".rdx")))
-      unlink(file.path(lazyDir, "gallery", paste0(y,".rdb")))
+      unlink(file.path(lazyDir, "gallery", paste0(y, ".rdx")))
+      unlink(file.path(lazyDir, "gallery", paste0(y, ".rdb")))
       message(paste("Object removed", y))
     } else {
       message(y, " not in lazy load db. Nothing removed.")
@@ -305,6 +312,8 @@ lazyRm <- function(objNames=NULL, lazyDir="lazyDir") {
 #'
 #' @return New lazyDir
 #'
+#' @importFrom archivist setLocalRepo
+#'
 #' @seealso \code{\link{lazyLs}}, \code{\link{lazyLoad2}}
 #' @docType methods
 #' @author Eliot McIntire
@@ -312,7 +321,7 @@ lazyRm <- function(objNames=NULL, lazyDir="lazyDir") {
 #' @export
 #' @examples
 #' \dontrun{
-#' setLazyDir("~/lazyDir")
+#' setLazyDir(file.path(tempdir(), "lazyDir"))
 #' a <- rnorm(10)
 #' lazySave(a)
 #' lazyRm("a")

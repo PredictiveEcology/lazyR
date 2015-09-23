@@ -15,22 +15,24 @@ lazyLoad2(objNames = NULL, lazyDir = "lazyDir", envir = parent.frame())
 \item{envir}{Which environment should the objects be loaded into. Default is \code{.GlobalEnv}}
 }
 \value{
-Nothing returned. This function is used for its side effects, i.e,. loading lazy objects
+Nothing returned. This function is used for its side effects, i.e., loading lazy objects
 }
 \description{
 Load all named objects into the specified environment.
 }
 \examples{
 \dontrun{
+tmpdir <- normalizePath(file.path(tempdir(), "lazyDir"))
 obj <- rnorm(10)
 # save the obj
-lazySave(obj, lazyDir="~/lazyDir")
+lazySave(obj, lazyDir=tmpdir)
 # remove the obj
 rm(obj)
 any(ls()=="obj") # Is FALSE
 # load it back in
-lazyLoad2("obj", lazyDir="~/lazyDir")
+lazyLoad2("obj", lazyDir=tmpdir)
 any(ls()=="obj") # Is TRUE
+unlink(tmpdir, recursive = TRUE)
 }
 }
 \author{
