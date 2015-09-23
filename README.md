@@ -9,6 +9,7 @@ The basic work flow is:
 - optionally give it tags while saving, `lazySave(obj, tags=c("maps", "USA"))`
 - list the contents of the lazyR database with `lazyLs()`
 - re-load objects via name or tag using `lazyLoad2(tag="maps")`
+- remove objects via `lazyRm(lazyLs("maps"))` or `lazyRm("objName")`
 
 Notes:
 
