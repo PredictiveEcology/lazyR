@@ -8,7 +8,7 @@
 lazyRm(objNames = NULL, lazyDir = "lazyDir")
 }
 \arguments{
-\item{objNames}{A character vector of names of objects to be removed from lazyR database.}
+\item{objNames}{A character vector of names of objects to be removed from a \code{lazyR} database.}
 
 \item{lazyDir}{Character string of directory to be used for the lazy databases.}
 }

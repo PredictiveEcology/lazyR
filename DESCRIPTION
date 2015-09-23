@@ -1,14 +1,16 @@
 Package: lazyR
-Title: What the Package Does (one line, title case)
+Title: Create lazyR databases for R objects
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph)
+Authors@R: person("Eliot", "McIntire", email = "eliot.mcintire@canada.ca", role = c("aut", "cre"))
+Description: Allows lazy saving of objects.
 Depends:
     R (>= 3.2.2)
-License: What license is it under?
+License: GPL-3
 LazyData: true
-Imports:
+Depends:
     archivist,
-    dplyr
+Imports:
+    dplyr,
+    magrittr
 Collate:
     'lazyR.R'
