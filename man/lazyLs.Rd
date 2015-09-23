@@ -6,7 +6,7 @@
 \title{List contents of lazy load database, using a tag}
 \usage{
 lazyLs(tag = NULL, lazyDir = "lazyDir", tagType = "objectName:",
-  archivistCol = "tag")
+  archivistCol = "tag", exact = FALSE)
 }
 \arguments{
 \item{tag}{Character string (not vectorized!). Search objects using this tag as a pattern.}
@@ -15,13 +15,18 @@ lazyLs(tag = NULL, lazyDir = "lazyDir", tagType = "objectName:",
 This creates an archivist repository.}
 
 \item{tagType}{Some tags have prefixes, such as "class:".
-The search can be thus within a tagType if this is specified}
+The search can be thus within a tagType if this is specified.
+If "all", then all tag types are returned.}
 
 \item{archivistCol}{The name of the column to return from a showLocalRepo call.
-This is usually "tag" or "artifact".}
+This can be "tag" or "artifact" or "createdDate".}
+
+\item{exact}{Logical. Should the tag matching be exact matching or not.
+
+If exact=TRUE is used, this is equivalent to a regexp expression with ^expr$.}
 }
 \value{
-A character vector of object names that match the tag requested.
+A character vector that matches the tagType, tag, and archivistCol requested.
 }
 \description{
 This will simply list object names that are contained within an archivist
@@ -29,13 +34,19 @@ lazy load database. The listing can be done with a tag.
 }
 \examples{
 \dontrun{
-tmpdir <- normalizePath(file.path(tempdir(), "lazyDir"))
+library(SpaDES)
+tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
+setLazyDir(tmpdir)
 a <- rnorm(10)
 b <- rnorm(20)
 lazySave(a, b, lazyDir = tmpdir)
 lazyLs()
 lazyLs(tag = "function")
 lazyLs(tag = "numeric")
+
+# To return the values of different tags, use the tagType argument
+lazyLs(tagType="objectName:")
+lazyLs(tagType="crs:")
 unlink(tmpdir, recursive = TRUE)
 }
 }
