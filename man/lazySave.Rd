@@ -17,7 +17,7 @@ lazySave(..., lazyDir = "lazyDir", tags = NULL, clearRepo = FALSE,
 
 \item{clearRepo}{Logical. Should the repository be deleted before adding new objects}
 
-\item{overwrite}{Logical. Should new object replace (i.e,. overwrite) previous object with same name}
+\item{overwrite}{Logical. Should new object replace (i.e., overwrite) previous object with same name}
 }
 \value{
 invisibly returns a character vector of objects saved.

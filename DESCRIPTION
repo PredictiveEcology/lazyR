@@ -1,14 +1,14 @@
 Package: lazyR
-Title: Create lazyR databases for R objects
+Title: Create lazyLoad databases for R objects
 Version: 0.0.0.9000
 Authors@R: person("Eliot", "McIntire", email = "eliot.mcintire@canada.ca", role = c("aut", "cre"))
-Description: Allows lazy saving of objects.
+Description: Allows lazy saving of objects, analagous to lazy loaded packages.
 Depends:
     R (>= 3.2.2)
 License: GPL-3
 LazyData: true
 Depends:
-    archivist,
+    archivist
 Imports:
     dplyr,
     magrittr
