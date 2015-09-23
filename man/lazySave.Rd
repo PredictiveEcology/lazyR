@@ -3,7 +3,7 @@
 \docType{methods}
 \name{lazySave}
 \alias{lazySave}
-\title{Save objects to an R lazy database}
+\title{Save objects to a \code{lazyR} database}
 \usage{
 lazySave(..., lazyDir = "lazyDir", tags = NULL, clearRepo = FALSE,
   overwrite = FALSE)
@@ -25,13 +25,22 @@ invisibly returns a character vector of objects saved.
 \description{
 This function creates an archivist repository that holds metadata ("tags") associated
 with the object. Unlike the archivist package, the objects themselves are saved as
-lazy load databases (i.e., via tools:::makeLazyLoadDB). This means that an entire
-set of objects can be loaded lazily via tags, similarly to loading an R package.
+lazy load databases (i.e., via tools:::makeLazyLoadDB). Each object is saved into its own
+lazy load database, with a filename that matches the object name. Because it is also an
+archivist repository, lazy loading of objects can be done via tags, classes etc..
 }
 \details{
 The main use case for this is large, complicated datasets, such as GIS databases, that
 are used within R. Loading them lazily means that the user can have access to all of them,
 including their characteristics, without loading them all first (could be very slow).
+}
+\examples{
+a <- rnorm(10)
+b <- rnorm(20)
+lazySave(a, b)
+\dontrun{
+lazySave(mget(ls()))
+}
 }
 \author{
 Eliot McIntire

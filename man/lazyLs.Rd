@@ -27,6 +27,14 @@ A character vector of object names that match the tag requested.
 This will simply list object names that are contained within an archivist lazy load
 database. The listing can be done with a tag.
 }
+\examples{
+a <- rnorm(10)
+b <- rnorm(20)
+lazySave(a,b,lazyDir="~/lazyDir")
+lazyLs()
+lazyLs(tag="function")
+lazyLs(tag="numeric")
+}
 \author{
 Eliot McIntire
 }
