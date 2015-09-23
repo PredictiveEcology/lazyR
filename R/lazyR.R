@@ -198,6 +198,18 @@ lazyLs <-
 #' @export
 #' @importFrom archivist showLocalRepo
 #' @importFrom magrittr %>%
+#' @examples 
+#' \dontrun{
+#' obj <- rnorm(10)
+#' # save the obj
+#' lazySave(obj, lazyDir="~/lazyDir")
+#' # remove the obj
+#' rm(obj)
+#' any(ls()=="obj") # Is FALSE
+#' # load it back in
+#' lazyLoad2("obj", lazyDir="~/lazyDir")
+#' any(ls()=="obj") # Is TRUE
+#' }
 lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir",
                         envir=parent.frame()) {
   
@@ -254,6 +266,12 @@ lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir",
 #' @author Eliot McIntire
 #' @export
 #' @importFrom archivist rmFromRepo
+#' @examples 
+#' \dontrun{
+#' a <- rnorm(10)
+#' lazySave(a, lazyDir="~/lazyDir")
+#' lazyRm("a", lazyDir="~/lazyDir")
+#' }
 lazyRm <- function(objNames=NULL, lazyDir="lazyDir") {
   if(exists(".lazyDir", envir = .lazyREnv)) {
     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
@@ -294,6 +312,13 @@ lazyRm <- function(objNames=NULL, lazyDir="lazyDir") {
 #' @author Eliot McIntire
 #' @rdname lazyDir
 #' @export
+#' @examples 
+#' \dontrun{
+#' setLazyDir("~/lazyDir")
+#' a <- rnorm(10)
+#' lazySave(a)
+#' lazyRm("a")
+#' }
 setLazyDir <- function (lazyDir) 
 {
   stopifnot(is.character(lazyDir))
