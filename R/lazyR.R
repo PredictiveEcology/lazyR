@@ -88,7 +88,7 @@ lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
       obj <- objList[[N]]
       file <- names(objList[N])
       firstOne <- any(
-        lazyLs(tag = paste0("objectName:", file), lazyDir = lazyDir) == file
+        lazyLs(tag = paste0("objectName:", file), lazyDir = lazyDir, exact=TRUE) == file
       )
       if (firstOne) {
         if (!overwrite) {
@@ -114,7 +114,7 @@ lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
                                 paste0("class:", is(obj))))
         }
 
-        md5Hash <- lazyLs(tag=file, archivistCol = "artifact")
+        md5Hash <- lazyLs(tag=file, archivistCol = "artifact", lazyDir = lazyDir, exact = TRUE)
         
         # Add tags by class
         if(is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)))
@@ -163,17 +163,23 @@ lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
 #' \dontrun{
 #' library(SpaDES)
 #' tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
-#' setLazyDir(tmpdir)
 #' a <- rnorm(10)
 #' b <- rnorm(20)
 #' lazySave(a, b, lazyDir = tmpdir)
+#' lazyLs(lazyDir=tmpdir)
+#' 
+#' # can set lazyDir and don't need lazyDir argument
+#' setLazyDir(tmpdir)
 #' lazyLs()
-#' lazyLs(tag = "function")
-#' lazyLs(tag = "numeric")
+#' 
+#' # can add a tag to file list
+#' lazyLs(tag = "function") # empty character vector
+#' lazyLs(tag = "numeric") # object names of a and b
 #' 
 #' # To return the values of different tags, use the tagType argument
-#' lazyLs(tagType="objectName:")
-#' lazyLs(tagType="crs:")
+#' lazyLs(tagType="objectName:") # Just object names, the default
+#' lazyLs(tagType="class:")      # All classes in the database
+#' lazyLs(tagType="all")         # returns all information in the database
 #' unlink(tmpdir, recursive = TRUE)
 #' }
 lazyLs <- function(tag=NULL, lazyDir="lazyDir",
@@ -187,9 +193,13 @@ lazyLs <- function(tag=NULL, lazyDir="lazyDir",
   } else {
     tagTypeAll <- FALSE
   }
-    if (exists(".lazyDir", envir = .lazyREnv)) {
+
+    if (!is.null(getLazyDir())) {
       lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
         gsub(pattern = "/$", x=., replacement = "")
+    } else if (!dir.exists(lazyDir)) {
+      stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
+"or with setLazyDir()."))
     }
 
     b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
@@ -392,11 +402,9 @@ setLazyDir <- function(lazyDir) {
 #' @rdname lazyDir
 #' @export
 getLazyDir <- function() {
-  if (exists(".lazyDir", lazyDir, envir = .lazyREnv)) {
-    get(".lazyDir", lazyDir, envir = .lazyREnv)
-  } else {
-    message("lazyDir is not set yet. Use setLazyDir.")
-  }
+  if (exists(".lazyDir", envir = .lazyREnv)) {
+    get(".lazyDir", envir = .lazyREnv)
+  } 
 }
 
 #' The lazyREnv environment
