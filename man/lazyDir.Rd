@@ -20,6 +20,14 @@ New lazyDir
 This can be set and gotten with these functions, or all functions can take
 an argument, lazyDir, manually.
 }
+\examples{
+\dontrun{
+setLazyDir("~/lazyDir")
+a <- rnorm(10)
+lazySave(a)
+lazyRm("a")
+}
+}
 \author{
 Eliot McIntire
 }

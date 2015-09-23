@@ -18,6 +18,13 @@ Nothing returned. This function is used for its side effects, i.e,. loading lazy
 \description{
 Load all named objects into the specified environment.
 }
+\examples{
+\dontrun{
+a <- rnorm(10)
+lazySave(a, lazyDir="~/lazyDir")
+lazyRm("a", lazyDir="~/lazyDir")
+}
+}
 \author{
 Eliot McIntire
 }

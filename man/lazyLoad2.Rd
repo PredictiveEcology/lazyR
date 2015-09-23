@@ -20,6 +20,19 @@ Nothing returned. This function is used for its side effects, i.e,. loading lazy
 \description{
 Load all named objects into the specified environment.
 }
+\examples{
+\dontrun{
+obj <- rnorm(10)
+# save the obj
+lazySave(obj, lazyDir="~/lazyDir")
+# remove the obj
+rm(obj)
+any(ls()=="obj") # Is FALSE
+# load it back in
+lazyLoad2("obj", lazyDir="~/lazyDir")
+any(ls()=="obj") # Is TRUE
+}
+}
 \author{
 Eliot McIntire
 }
