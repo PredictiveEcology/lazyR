@@ -13,7 +13,7 @@ lazyRm(objNames = NULL, lazyDir = "lazyDir")
 \item{lazyDir}{Character string of directory to be used for the lazy databases.}
 }
 \value{
-Nothing returned. This function is used for its side effects, i.e,. loading lazy objects
+Nothing returned. This function is used for its side effects, i.e., loading lazy objects
 }
 \description{
 Load all named objects into the specified environment.
