@@ -11,6 +11,16 @@ The basic work flow is:
 - re-load objects via name or tag using `lazyLoad2(tag="maps")`
 - remove objects via `lazyRm(lazyLs("maps"))` or `lazyRm("objName")`
 
+Common things to use:
+
+- `lazyLs()` will list all objects in the database
+- `lazyLs(tagType="all")` will list the full archivist data.frame with md5Hash, tag, dateCreated columns.
+- others to come
+
+## Connection with `archivist` package
+
+The `lazyDir` argument in the `lazyR` package is exactly the same as a repository in archivist. Thus, all archivist functions work with the `lazyR` package. Simply use lazyDir and RepoDir interchangeably.
+
 Notes:
 
 - Some tags are done automatically
