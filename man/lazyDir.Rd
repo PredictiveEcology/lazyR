@@ -22,7 +22,7 @@ an argument, lazyDir, manually.
 }
 \examples{
 \dontrun{
-setLazyDir("~/lazyDir")
+setLazyDir(file.path(tempdir(), "lazyDir"))
 a <- rnorm(10)
 lazySave(a)
 lazyRm("a")
