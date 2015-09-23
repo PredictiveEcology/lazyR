@@ -170,7 +170,7 @@ lazyLs <-
       tag2 <- tag # creates confusion in dplyr because tag is a column name in 
                   # showLocalRepo and an argument in this function
       a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-        filter(grepl(paste0(tag2), tag)) %>% 
+        filter(grepl(paste0(tagType,tag2,"$"), tag)) %>% 
         select_("artifact")  
       
       b <- left_join(a,b,by="artifact") %>% 
