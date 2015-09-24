@@ -49,10 +49,6 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
   objList <- list(...)
   file <- NULL
 
-  if(is.null(lazyDir)) {
-    lazyDir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
-    message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
-  }
   if (is(objList[[1]], "list")) {
     objList <- objList[[1]]
   }
@@ -70,11 +66,15 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
   #objList <- list(obj)
   names(objList) <- file
 
-  if (exists(".lazyDir", envir = .lazyREnv)) {
-    lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
-      gsub(pattern = "/$", x=., replacement = "")
+  if (!is.null(getLazyDir())) {
+    lazyDir <- getLazyDir() 
   }
 
+  if(is.null(lazyDir)) {
+    lazyDir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
+    message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
+  }
+  
   checkPath(lazyDir, create = TRUE)
   #dir.create(lazyDir, showWarnings = FALSE)
 
@@ -422,7 +422,9 @@ setLazyDir <- function(lazyDir) {
 #' @export
 getLazyDir <- function() {
   if (exists(".lazyDir", envir = .lazyREnv)) {
-    get(".lazyDir", envir = .lazyREnv)
+    get(".lazyDir", envir = .lazyREnv) %>%
+      gsub(pattern = "/$", x=., replacement = "") %>%
+      gsub(pattern = "\\$", x=., replacement = "") 
   } 
 }
 
