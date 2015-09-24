@@ -27,6 +27,7 @@ setLazyDir(file.path(tempdir(), "lazyDir"))
 a <- rnorm(10)
 lazySave(a)
 lazyRm("a")
+unlink(file.path(tempdir(), "lazyDir"))
 }
 }
 \author{

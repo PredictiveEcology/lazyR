@@ -5,7 +5,7 @@
 \alias{lazyLs}
 \title{List contents of lazy load database, using a tag}
 \usage{
-lazyLs(tag = NULL, lazyDir = "lazyDir", tagType = "objectName:",
+lazyLs(tag = NULL, lazyDir = NULL, tagType = "objectName:",
   archivistCol = "tag", exact = FALSE)
 }
 \arguments{
@@ -36,17 +36,23 @@ lazy load database. The listing can be done with a tag.
 \dontrun{
 library(SpaDES)
 tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
-setLazyDir(tmpdir)
 a <- rnorm(10)
 b <- rnorm(20)
 lazySave(a, b, lazyDir = tmpdir)
+lazyLs(lazyDir=tmpdir)
+
+# can set lazyDir and don't need lazyDir argument
+setLazyDir(tmpdir)
 lazyLs()
-lazyLs(tag = "function")
-lazyLs(tag = "numeric")
+
+# can add a tag to file list
+lazyLs(tag = "function") # empty character vector
+lazyLs(tag = "numeric") # object names of a and b
 
 # To return the values of different tags, use the tagType argument
-lazyLs(tagType="objectName:")
-lazyLs(tagType="crs:")
+lazyLs(tagType="objectName:") # Just object names, the default
+lazyLs(tagType="class:")      # All classes in the database
+lazyLs(tagType="all")         # returns all information in the database
 unlink(tmpdir, recursive = TRUE)
 }
 }
