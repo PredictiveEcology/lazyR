@@ -254,7 +254,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #'
 #' @param envir Which environment should the objects be loaded into. Default is \code{.GlobalEnv}
 #'
-#' @return Nothing returned. This function is used for its side effects, i.e., loading lazy objects
+#' @return Invisibly, the objects read in returned. This function is used for its side effects, i.e., loading lazy objects
 #'
 #' @seealso \code{\link{lazyLs}}, \code{\link{lazyRm}}.
 #' @docType methods
@@ -279,6 +279,8 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #'
 lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 
+  ObsRead <- character(0)
+  on.exit(message("Objects read: ", paste(ObsRead, collapse=", ")))
   if (exists(".lazyDir", envir = .lazyREnv)) {
     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
       gsub(pattern = "/$", x=., replacement = "")
@@ -295,7 +297,9 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 
   lapply(objNames, function(y) {
     if (any(y == lazyLs(tag="Raster", lazyDir=lazyDir))) {
-      md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir)
+#      browser()
+      md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir, 
+                        exact=TRUE)
 
       rasterFile <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
         filter(artifact==md5Hash) %>%
@@ -310,16 +314,17 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
         rasterName <- gsub(rasterFile$tag, replacement = "", pattern="filename:")
         assign(y, value=raster(rasterName), envir=envir)
       }
-      message(paste("Read Raster", y))
+      ObsRead <<- c(ObsRead,  y)
     } else {
       md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir)
       
       lazyLoad(file.path(lazyDir, "gallery", md5Hash), 
                envir = envir)
-      message(paste("Read Object", y))
+      ObsRead <<- c(ObsRead,  y)
     }
-    })
-  return(invisible())
+  })
+  
+  return(invisible(ObsRead))
 }
 
 #' Load lazy objects from a \code{lazyR} database
