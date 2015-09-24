@@ -316,7 +316,8 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
       }
       ObsRead <<- c(ObsRead,  y)
     } else {
-      md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir)
+      md5Hash <- lazyLs(tag=y, archivistCol="artifact", 
+                        lazyDir=lazyDir, exact=TRUE)
       
       lazyLoad(file.path(lazyDir, "gallery", md5Hash), 
                envir = envir)
