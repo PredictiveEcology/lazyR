@@ -5,7 +5,7 @@
 \alias{lazyObjectName}
 \title{Get object name with an md5hash}
 \usage{
-lazyObjectName(md5Hash)
+lazyObjectName(md5Hash, lazyDir)
 }
 \arguments{
 \item{md5Hash}{A character string indicating the md5hash value to look up the object name}

@@ -21,8 +21,8 @@ Load all named objects into the specified environment.
 \examples{
 \dontrun{
 a <- rnorm(10)
-lazySave(a, lazyDir="~/lazyDir")
-lazyRm("a", lazyDir="~/lazyDir")
+lazySave(a, lazyDir=tempdir())
+lazyRm("a", lazyDir=tempdir())
 }
 }
 \author{

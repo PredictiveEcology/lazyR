@@ -41,14 +41,18 @@ if (getRversion() >= "3.1.0") {
 #' a <- rnorm(10)
 #' b <- rnorm(20)
 #' lazySave(a, b)
-#' \dontrun{
-#' lazySave(mget(ls()))
+#' \dontrun{ # may be many objects
+#' lazySave(mget(ls(envir=.GlobalEnv)))
 #' }
-lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
+lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
                      overwrite=FALSE) {
   objList <- list(...)
   file <- NULL
 
+  if(is.null(lazyDir)) {
+    lazyDir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
+    message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
+  }
   if (is(objList[[1]], "list")) {
     objList <- objList[[1]]
   }
@@ -88,7 +92,7 @@ lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
       obj <- objList[[N]]
       file <- names(objList[N])
       firstOne <- any(
-        lazyLs(tag = paste0("objectName:", file), lazyDir = lazyDir, exact=TRUE) == file
+        lazyLs(tag = file, lazyDir = lazyDir, exact=TRUE) == file
       )
       if (firstOne) {
         if (!overwrite) {
@@ -117,7 +121,8 @@ lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
         md5Hash <- lazyLs(tag=file, archivistCol = "artifact", lazyDir = lazyDir, exact = TRUE)
         
         # Add tags by class
-        if(is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)))
+        if(is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
+                                                  repoDir = lazyDir)
         
       # Save the actual objects as lazy load databases  
         list2env(x = objList[N]) %>%
@@ -159,6 +164,7 @@ lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
 #' @importFrom dplyr select select_ filter distinct left_join distinct_
 #' @importFrom archivist showLocalRepo
 #' @importFrom magrittr %>%
+#' @importFrom SpaDES checkPath 
 #' @examples
 #' \dontrun{
 #' library(SpaDES)
@@ -182,7 +188,7 @@ lazySave <- function(..., lazyDir="lazyDir", tags=NULL, clearRepo=FALSE,
 #' lazyLs(tagType="all")         # returns all information in the database
 #' unlink(tmpdir, recursive = TRUE)
 #' }
-lazyLs <- function(tag=NULL, lazyDir="lazyDir",
+lazyLs <- function(tag=NULL, lazyDir=NULL,
                    tagType="objectName:",
                    archivistCol="tag",
                    exact=FALSE) {
@@ -194,13 +200,19 @@ lazyLs <- function(tag=NULL, lazyDir="lazyDir",
     tagTypeAll <- FALSE
   }
 
-    if (!is.null(getLazyDir())) {
-      lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
-        gsub(pattern = "/$", x=., replacement = "")
-    } else if (!dir.exists(lazyDir)) {
-      stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
-"or with setLazyDir()."))
-    }
+  if (!is.null(getLazyDir())) {
+    lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
+      gsub(pattern = "/$", x=., replacement = "")
+  } 
+
+  if(is.null(lazyDir)) {
+    lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
+  }
+  
+  if (!dir.exists(lazyDir)) {
+    stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
+                "or with setLazyDir()."))
+  }
 
     b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
       filter(grepl(pattern=tagType, tag)) %>%
@@ -251,8 +263,8 @@ lazyLs <- function(tag=NULL, lazyDir="lazyDir",
 #' @importFrom archivist showLocalRepo
 #' @importFrom magrittr %>%
 #' @examples
-#' \dontrun{
-#' tmpdir <- normalizePath(file.path(tempdir(), "lazyDir"))
+#' library(SpaDES)
+#' tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
 #' obj <- rnorm(10)
 #' # save the obj
 #' lazySave(obj, lazyDir=tmpdir)
@@ -263,15 +275,19 @@ lazyLs <- function(tag=NULL, lazyDir="lazyDir",
 #' lazyLoad2("obj", lazyDir=tmpdir)
 #' any(ls()=="obj") # Is TRUE
 #' unlink(tmpdir, recursive = TRUE)
-#' }
 #'
-lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir", envir=parent.frame()) {
+lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 
   if (exists(".lazyDir", envir = .lazyREnv)) {
     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
       gsub(pattern = "/$", x=., replacement = "")
   }
 
+  if(is.null(lazyDir)) {
+    lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
+  }
+  
+  
   if (is.null(objNames)) {
     objNames <- unique(lazyLs(lazyDir = lazyDir))
   }
@@ -324,10 +340,11 @@ lazyLoad2 <- function(objNames=NULL, lazyDir="lazyDir", envir=parent.frame()) {
 #' @examples
 #' \dontrun{
 #' a <- rnorm(10)
-#' lazySave(a, lazyDir="~/lazyDir")
-#' lazyRm("a", lazyDir="~/lazyDir")
+#' lazySave(a, lazyDir=tempdir())
+#' lazyRm("a", lazyDir=tempdir())
 #' }
 lazyRm <- function(objNames=NULL, lazyDir="lazyDir", exact=TRUE) {
+
   if (exists(".lazyDir", envir = .lazyREnv)) {
     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
       gsub(pattern = "/$", x=., replacement = "")
@@ -341,8 +358,8 @@ lazyRm <- function(objNames=NULL, lazyDir="lazyDir", exact=TRUE) {
     z <- lazyLs(y, archivistCol = "artifact", lazyDir=lazyDir, exact=exact)
     if(length(z)>0) {
       for (toRm in z) {
-        objName <- lazyObjectName(toRm)
-        rmFromRepo(toRm)
+        objName <- lazyObjectName(toRm, lazyDir=lazyDir)
+        rmFromRepo(toRm, repoDir = lazyDir)
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdx")))
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdb")))
         message(paste("Object removed", objName))
@@ -379,6 +396,7 @@ lazyRm <- function(objNames=NULL, lazyDir="lazyDir", exact=TRUE) {
 #' a <- rnorm(10)
 #' lazySave(a)
 #' lazyRm("a")
+#' unlink(file.path(tempdir(), "lazyDir"))
 #' }
 setLazyDir <- function(lazyDir) {
   if(is.null(lazyDir)) {
@@ -432,8 +450,8 @@ getLazyDir <- function() {
 #' @examples
 #' \dontrun{
 #' }
-lazyObjectName <- function(md5Hash) {
-  lazyObjectName <- showLocalRepo(method="tags") %>% 
+lazyObjectName <- function(md5Hash, lazyDir) {
+  lazyObjectName <- showLocalRepo(method="tags", repoDir = lazyDir) %>% 
     filter(artifact==md5Hash) %>% 
     filter(grepl(pattern="objectName:", tag)) %>%
     select_("tag") %>%

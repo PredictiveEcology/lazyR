@@ -21,8 +21,8 @@ Nothing returned. This function is used for its side effects, i.e., loading lazy
 Load all named objects into the specified environment.
 }
 \examples{
-\dontrun{
-tmpdir <- normalizePath(file.path(tempdir(), "lazyDir"))
+library(SpaDES)
+tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
 obj <- rnorm(10)
 # save the obj
 lazySave(obj, lazyDir=tmpdir)
@@ -33,7 +33,6 @@ any(ls()=="obj") # Is FALSE
 lazyLoad2("obj", lazyDir=tmpdir)
 any(ls()=="obj") # Is TRUE
 unlink(tmpdir, recursive = TRUE)
-}
 }
 \author{
 Eliot McIntire

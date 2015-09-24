@@ -5,7 +5,7 @@
 \alias{lazySave}
 \title{Save objects to a \code{lazyR} database}
 \usage{
-lazySave(..., lazyDir = "lazyDir", tags = NULL, clearRepo = FALSE,
+lazySave(..., lazyDir = NULL, tags = NULL, clearRepo = FALSE,
   overwrite = FALSE)
 }
 \arguments{
@@ -39,7 +39,7 @@ a <- rnorm(10)
 b <- rnorm(20)
 lazySave(a, b)
 \dontrun{
-lazySave(mget(ls()))
+lazySave(mget(ls(envir=.GlobalEnv)))
 }
 }
 \author{
