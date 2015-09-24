@@ -238,10 +238,11 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
         distinct_
     }
     if(tagTypeAll) {
-      b
+      out <- b
     } else {
-      gsub(x = b[, archivistCol], pattern = tagType, replacement = "")
+      out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "")
     }
+    return(sort(out))
 }
 
 #' Load lazy objects from a \code{lazyR} database
@@ -280,7 +281,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 
   ObsRead <- character(0)
-  on.exit(message("Objects read: ", paste(ObsRead, collapse=", ")))
+  on.exit(message(length(ObsRead), " objects loaded of ", length(objNames)))
   if (exists(".lazyDir", envir = .lazyREnv)) {
     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
       gsub(pattern = "/$", x=., replacement = "")
@@ -325,7 +326,7 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
     }
   })
   
-  return(invisible(ObsRead))
+  return(invisible(sort(ObsRead)))
 }
 
 #' Load lazy objects from a \code{lazyR} database
