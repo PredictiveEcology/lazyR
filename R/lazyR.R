@@ -280,8 +280,12 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #'
 lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 
-  ObsRead <- character(0)
-  on.exit(message(length(ObsRead), " objects loaded of ", length(objNames)))
+  obsRead <- character(0)
+  on.exit(expr= {
+    message(length(obsRead), " objects loaded of ", length(objNames))
+    if(length(obsRead)!=length(objNames)) {
+      message("Failed on ", objNames[!(objNames %in% obsRead)][1])
+    }})
   if (exists(".lazyDir", envir = .lazyREnv)) {
     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
       gsub(pattern = "/$", x=., replacement = "")
@@ -297,8 +301,7 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
   }
 
   lapply(objNames, function(y) {
-    if (any(y == lazyLs(tag="Raster", lazyDir=lazyDir))) {
-#      browser()
+    if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir, 
                         exact=TRUE)
 
@@ -315,18 +318,19 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
         rasterName <- gsub(rasterFile$tag, replacement = "", pattern="filename:")
         assign(y, value=raster(rasterName), envir=envir)
       }
-      ObsRead <<- c(ObsRead,  y)
+      obsRead <<- c(obsRead,  y)
     } else {
       md5Hash <- lazyLs(tag=y, archivistCol="artifact", 
                         lazyDir=lazyDir, exact=TRUE)
       
       lazyLoad(file.path(lazyDir, "gallery", md5Hash), 
                envir = envir)
-      ObsRead <<- c(ObsRead,  y)
+      
+      obsRead <<- c(obsRead,  y)
     }
   })
   
-  return(invisible(sort(ObsRead)))
+  return(invisible(sort(obsRead)))
 }
 
 #' Load lazy objects from a \code{lazyR} database
