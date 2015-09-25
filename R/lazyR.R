@@ -14,6 +14,20 @@ if (getRversion() >= "3.1.0") {
 #' The main use case for this is large, complicated datasets, such as GIS databases, that
 #' are used within R. Loading them lazily means that the user can have access to all of them,
 #' including their characteristics, without loading them all first (could be very slow).
+#' 
+#' When \code{copyRasterFile} is \code{TRUE}, it may take a while as the original source
+#' file is copied. Also, the slot in the raster file that indicates the file pointer 
+#' is switched to new location. This allows more modular lazyR database, i.e., if the Raster
+#' files are copied into the lazyR database, then the whole database contains everything needed
+#' to copy to another machine. Note: If \code{copyRasterFile} is TRUE, but the file is already
+#' there and is identical (using \code{\link[digest]{digest}}), then no copy is done.
+#' 
+#' When \code{copyRasterFile} is \code{TRUE}, it will actually run a \code{digest}
+#' command on the file, if it already exists in the rasters directory of the lazyR database.
+#' If this hash resulting from the \code{digest} indicates that the file is already there and 
+#' it is identical, then it will not actually be copied. This will be good for speed, but
+#' will miss small changes in files. Set \code{compareRasterFileLength} to \code{Inf} if 
+#' truly exact comparisons behaviour is needed.
 #'
 #' @param ... Objects to save to an R lazy database, with metadata saved via archivist package repository.
 #'
@@ -24,6 +38,12 @@ if (getRversion() >= "3.1.0") {
 #' @param clearRepo Logical. Should the repository be deleted before adding new objects
 #'
 #' @param overwrite Logical. Should new object replace (i.e., overwrite) previous object with same name
+#'
+#' @param copyRasterFile Logical. Should the source file for rasters be copied into the lazyDir. 
+#' Default TRUE, which may be slow. See Details.
+#' 
+#' @param compareRasterFileLength Numeric. This is passed to the length arg in \code{digest} 
+#' when determining if the Raster file is already in the database. Default 1e6. See Details.
 #'
 #' @return invisibly returns a character vector of objects saved.
 #'
@@ -36,6 +56,7 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom raster crs
 #' @importFrom archivist deleteRepo createEmptyRepo saveToRepo
 #' @importFrom magrittr %>%
+#' @importFrom digest digest
 #' @importFrom SpaDES checkPath 
 #' @examples
 #' a <- rnorm(10)
@@ -45,7 +66,8 @@ if (getRversion() >= "3.1.0") {
 #' lazySave(mget(ls(envir=.GlobalEnv)))
 #' }
 lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
-                     overwrite=FALSE) {
+                     overwrite=FALSE, copyRasterFile=TRUE, 
+                     compareRasterFileLength=1e6) {
   objList <- list(...)
   file <- NULL
 
@@ -102,15 +124,43 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
         } else {
           lazyRm(file)
         }
+          
       }
       if (shouldSave) {
+        
         if (is(obj, "Raster")){
-#          if (nchar(slot(slot(obj, "file"), "name"))==0) { # in memory
-#          }
+          if(copyRasterFile & !inMemory(obj)){
+            curFilename <- normalizePath(filename(obj))
+            checkPath(file.path(lazyDir,"rasters"), create=TRUE)
+            
+            saveFilename <- normalizePath(file.path(getLazyDir(),"rasters",basename(curFilename)),
+                                          mustWork=FALSE)
+            if(saveFilename!=curFilename) {
+              shouldCopy <- TRUE
+              if(file.exists(saveFilename)) {
+                if(!(compareRasterFileLength==Inf)) {
+                  if(digest(file = saveFilename, length=compareRasterFileLength)==
+                       digest(file = curFilename, length=compareRasterFileLength)) {
+                    shouldCopy <- FALSE
+                  }
+                } else {
+                  shouldCopy = TRUE
+                }
+              } 
+              if(shouldCopy) {
+                file.copy(to = saveFilename, overwrite = TRUE, 
+                        recursive = FALSE, copy.mode = TRUE,
+                        from = curFilename)
+              }
+              slot(slot(objList[[N]], "file"), "name") <- saveFilename
+            }
+          } else {
+            saveFilename <- slot(slot(obj, "file"), "name")
+          }
           saveToRepo(file, repoDir = lazyDir,
                      userTags = c(paste0("objectName:", file), tags,
                                  paste0("class:", is(obj)),
-                                 paste0("filename:", slot(slot(obj, "file"), "name"))
+                                 paste0("filename:", saveFilename)
                                 ))
         } else {
           saveToRepo(file, repoDir = lazyDir,
@@ -238,11 +288,11 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
         distinct_
     }
     if(tagTypeAll) {
-      out <- b
+      out <- b 
     } else {
-      out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "")
+      out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "") %>% sort
     }
-    return(sort(out))
+    return(out)
 }
 
 #' Load lazy objects from a \code{lazyR} database
@@ -355,7 +405,7 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #' lazySave(a, lazyDir=tempdir())
 #' lazyRm("a", lazyDir=tempdir())
 #' }
-lazyRm <- function(objNames=NULL, lazyDir="lazyDir", exact=TRUE) {
+lazyRm <- function(objNames=NULL, lazyDir="lazyDir", exact=TRUE, removeRasterFile=FALSE) {
 
   if (exists(".lazyDir", envir = .lazyREnv)) {
     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
@@ -367,10 +417,18 @@ lazyRm <- function(objNames=NULL, lazyDir="lazyDir", exact=TRUE) {
   }
 
   lapply(objNames, function(y) {
+    
     z <- lazyLs(y, archivistCol = "artifact", lazyDir=lazyDir, exact=exact)
     if(length(z)>0) {
       for (toRm in z) {
         objName <- lazyObjectName(toRm, lazyDir=lazyDir)
+
+        #tmpEnv <- new.env()
+        #lazyLoad2(objName, envir = tmpEnv)
+        if(lazyIs(objName, "Raster") & removeRasterFile) {
+          file.remove(filename(tmpEnv[[objName]]))
+        }
+        
         rmFromRepo(toRm, repoDir = lazyDir)
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdx")))
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdb")))

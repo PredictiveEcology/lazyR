@@ -5,7 +5,8 @@
 \alias{lazyRm}
 \title{Load lazy objects from a \code{lazyR} database}
 \usage{
-lazyRm(objNames = NULL, lazyDir = "lazyDir", exact = TRUE)
+lazyRm(objNames = NULL, lazyDir = "lazyDir", exact = TRUE,
+  removeRasterFile = FALSE)
 }
 \arguments{
 \item{objNames}{A character vector of names of objects to be removed from a \code{lazyR} database.}
