@@ -216,7 +216,6 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 #' @importFrom magrittr %>%
 #' @importFrom SpaDES checkPath 
 #' @examples
-#' \dontrun{
 #' library(SpaDES)
 #' tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
 #' a <- rnorm(10)
@@ -238,7 +237,6 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 #'                               #returns multiple lines per object
 #' lazyLs(tagType="all")         # returns all information in the database
 #' unlink(tmpdir, recursive = TRUE)
-#' }
 lazyLs <- function(tag=NULL, lazyDir=NULL,
                    tagType="objectName:",
                    archivistCol="tag",
@@ -327,7 +325,6 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' lazyLoad2("obj", lazyDir=tmpdir)
 #' any(ls()=="obj") # Is TRUE
 #' unlink(tmpdir, recursive = TRUE)
-#'
 lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 
   obsRead <- character(0)
@@ -400,11 +397,9 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #' @export
 #' @importFrom archivist rmFromRepo
 #' @examples
-#' \dontrun{
 #' a <- rnorm(10)
 #' lazySave(a, lazyDir=tempdir())
 #' lazyRm("a", lazyDir=tempdir())
-#' }
 lazyRm <- function(objNames=NULL, lazyDir="lazyDir", exact=TRUE, removeRasterFile=FALSE) {
 
   if (exists(".lazyDir", envir = .lazyREnv)) {
