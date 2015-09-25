@@ -531,3 +531,34 @@ lazyObjectName <- function(md5Hash, lazyDir) {
   return(lazyObjectName)
     
 }
+
+#' Get object class
+#'
+#' @param objName A character string indicating the object name
+#' 
+#' @param removeCharacter Logical. There is an artifact tag, class:character for any
+#' non-character object. This will be removed automatically in the return, unless this 
+#' is FALSE
+#'
+#' @return A character vector equivalent to the an \code{is(objName)} command
+#'
+#' @importFrom dplyr filter select_ as.tbl
+#'
+#' @seealso \code{\link{lazyLs}}, \code{\link{lazyLoad2}}
+#' @docType methods
+#' @author Eliot McIntire
+#' @rdname lazyIs
+#' @export
+lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE){
+  out <- lazyLs(tagType = "all") %>% 
+    filter(artifact==lazyLs(objName, exact=TRUE, archivistCol = "artifact")) %>% 
+    filter(grepl(pattern="class", tag)) %>%
+    select_("tag") %>%
+    gsub(x = .$tag, pattern="class:", replacement = "")
+  if(removeCharacter)
+    out <- out[!grepl(x = out, pattern="character")]
+  if(!is.null(class2))
+    out <- any(out==class2)
+  return(out)
+    
+}
