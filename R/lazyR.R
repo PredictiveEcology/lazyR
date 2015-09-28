@@ -5,27 +5,28 @@ if (getRversion() >= "3.1.0") {
 ################################################################################
 #' Save objects to a \code{lazyR} database
 #'
-#' This function creates an archivist repository that holds metadata ("tags") associated
-#' with the object. Unlike the archivist package, the objects themselves are saved as
-#' lazy load databases (i.e., via tools:::makeLazyLoadDB). Each object is saved into its own
-#' lazy load database, with a filename that matches the object name. Because it is also an
-#' archivist repository, lazy loading of objects can be done via tags, classes etc..
+#' This function creates an archivist repository that holds metadata ("tags")
+#' associated with the object. Unlike the \code{archivist} package, the objects
+#' themselves are saved as lazy load databases (i.e., via tools:::makeLazyLoadDB).
+#' Each object is saved into its own lazy load database, with a filename that
+#' matches the object name. Because it is also an archivist repository, lazy
+#' loading of objects can be done via tags, classes etc..
 #'
 #' The main use case for this is large, complicated datasets, such as GIS databases, that
 #' are used within R. Loading them lazily means that the user can have access to all of them,
 #' including their characteristics, without loading them all first (could be very slow).
 #' When \code{copyRasterFile} is \code{TRUE}, it may take a while as the original source
-#' file is copied. Also, the slot in the raster file that indicates the file pointer 
+#' file is copied. Also, the slot in the raster file that indicates the file pointer
 #' is switched to new location. This allows more modular lazyR database, i.e., if the Raster
 #' files are copied into the lazyR database, then the whole database contains everything needed
 #' to copy to another machine. Note: If \code{copyRasterFile} is TRUE, but the file is already
 #' there and is identical (using \code{\link[digest]{digest}}), then no copy is done.
-#' 
+#'
 #' When \code{copyRasterFile} is \code{TRUE}, it will actually run a \code{digest}
 #' command on the file, if it already exists in the rasters directory of the lazyR database.
-#' If this hash resulting from the \code{digest} indicates that the file is already there and 
+#' If this hash resulting from the \code{digest} indicates that the file is already there and
 #' it is identical, then it will not actually be copied. This will be good for speed, but
-#' will miss small changes in files. Set \code{compareRasterFileLength} to \code{Inf} if 
+#' will miss small changes in files. Set \code{compareRasterFileLength} to \code{Inf} if
 #' truly exact comparisons behaviour is needed.
 #'
 #' @param ... Objects to save to an R lazy database, with metadata saved via archivist package repository.
@@ -38,13 +39,10 @@ if (getRversion() >= "3.1.0") {
 #'
 #' @param overwrite Logical. Should new object replace (i.e., overwrite) previous object with same name
 #'
-#' 
-#' @param overwrite Logical. Should new object replace (i.e,. overwrite) previous object with same name
-#' 
-#' @param copyRasterFile Logical. Should the source file for rasters be copied into the lazyDir. 
+#' @param copyRasterFile Logical. Should the source file for rasters be copied into the lazyDir.
 #' Default TRUE, which may be slow. See Details.
-#' 
-#' @param compareRasterFileLength Numeric. This is passed to the length arg in \code{digest} 
+#'
+#' @param compareRasterFileLength Numeric. This is passed to the length arg in \code{digest}
 #' when determining if the Raster file is already in the database. Default 1e6. See Details.
 #'
 #' @return invisibly returns a character vector of objects saved.
@@ -59,7 +57,7 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom archivist deleteRepo createEmptyRepo saveToRepo
 #' @importFrom magrittr %>%
 #' @importFrom digest digest
-#' @importFrom SpaDES checkPath 
+#' @importFrom SpaDES checkPath
 #' @examples
 #' a <- rnorm(10)
 #' b <- rnorm(20)
@@ -69,7 +67,7 @@ if (getRversion() >= "3.1.0") {
 #' unlink(file.path(tempdir(),"lazyDir"))
 #' }
 lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
-                     overwrite=FALSE, copyRasterFile=TRUE, 
+                     overwrite=FALSE, copyRasterFile=TRUE,
                      compareRasterFileLength=1e6) {
   objList <- list(...)
   objNames <- NULL
@@ -131,15 +129,15 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
         } else {
           lazyRm(objName)
         }
-          
+
       }
       if (shouldSave) {
-        
+
         if (is(obj, "Raster")){
           if(copyRasterFile & !inMemory(obj)){
             curFilename <- normalizePath(filename(obj))
             checkPath(file.path(lazyDir,"rasters"), create=TRUE)
-            
+
             saveFilename <- normalizePath(file.path(getLazyDir(),"rasters",basename(curFilename)),
                                           mustWork=FALSE)
             if(saveFilename!=curFilename) {
@@ -153,9 +151,9 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
                 } else {
                   shouldCopy = TRUE
                 }
-              } 
+              }
               if(shouldCopy) {
-                file.copy(to = saveFilename, overwrite = TRUE, 
+                file.copy(to = saveFilename, overwrite = TRUE,
                         recursive = FALSE, copy.mode = TRUE,
                         from = curFilename)
               }
@@ -176,12 +174,12 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
         }
 
         md5Hash <- lazyLs(tag=objName, archivistCol = "artifact", lazyDir = lazyDir, exact = TRUE)
-        
+
         # Add tags by class
         if(is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
                                                   repoDir = lazyDir)
-        
-      # Save the actual objects as lazy load databases  
+
+      # Save the actual objects as lazy load databases
         list2env(x = objList[N]) %>%
           tools:::makeLazyLoadDB(., file.path(lazyDir,"gallery", md5Hash))
       }
@@ -201,16 +199,16 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 #' This creates an archivist repository.
 #'
 #' @param tagType Some tags have prefixes, such as "class:".
-#' The search can be thus within a tagType if this is specified. 
+#' The search can be thus within a tagType if this is specified.
 #' If "all", then all tag types are returned.
 #'
 #' @param archivistCol The name of the column to return from a showLocalRepo call.
 #' This can be "tag" or "artifact" or "createdDate".
 #'
-#' @param exact Logical. Should the tag matching be exact matching or not. 
-#' 
+#' @param exact Logical. Should the tag matching be exact matching or not.
+#'
 #' If exact=TRUE is used, this is equivalent to a regexp expression with ^expr$.
-#' 
+#'
 #' @return A character vector that matches the tagType, tag, and archivistCol requested.
 #'
 #' @seealso \code{\link{lazyLs}}, \code{\link{lazyRm}}, \code{\link{lazyLoad2}}, 
@@ -222,7 +220,7 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 #' @importFrom dplyr select select_ filter distinct left_join distinct_
 #' @importFrom archivist showLocalRepo
 #' @importFrom magrittr %>%
-#' @importFrom SpaDES checkPath 
+#' @importFrom SpaDES checkPath
 #' @examples
 #' \dontrun{
 #' library(SpaDES)
@@ -231,18 +229,18 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 #' b <- rnorm(20)
 #' lazySave(a, b, lazyDir = tmpdir)
 #' lazyLs(lazyDir=tmpdir)
-#' 
+#'
 #' # can set lazyDir and don't need lazyDir argument
 #' setLazyDir(tmpdir)
 #' lazyLs()
-#' 
+#'
 #' # can add a tag to file list
 #' lazyLs(tag = "function") # empty character vector
 #' lazyLs(tag = "numeric") # object names of a and b
-#' 
+#'
 #' # To return the values of different tags, use the tagType argument
 #' lazyLs(tagType="objectName:") # Just object names, the default
-#' lazyLs(tagType="class:")      # All classes in the database, 
+#' lazyLs(tagType="class:")      # All classes in the database,
 #'                               #returns multiple lines per object
 #' lazyLs(tagType="all")         # returns all information in the database
 #' unlink(tmpdir, recursive = TRUE)
@@ -276,7 +274,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
     b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
       filter(grepl(pattern=tagType, tag)) %>%
       distinct_("artifact", "tag") #%>%
-      #select_("artifact", archivistCol) 
+      #select_("artifact", archivistCol)
 
     if (!is.null(tag)) {
 
@@ -284,19 +282,19 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
                   # showLocalRepo and an argument in this function
       if(exact) {
         a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-          filter(grepl(paste0("^",tagType,tag2,"$"), tag)) %>% 
-          select_("artifact")  
+          filter(grepl(paste0("^",tagType,tag2,"$"), tag)) %>%
+          select_("artifact")
       } else {
         a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-          filter(grepl(paste0(tag2), tag)) %>% 
-          select_("artifact")  
+          filter(grepl(paste0(tag2), tag)) %>%
+          select_("artifact")
       }
-      
+
       b <- left_join(a, b, by="artifact") %>%
         distinct_
     }
     if(tagTypeAll) {
-      out <- b 
+      out <- b
     } else {
       out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "") %>% sort
     }
@@ -308,12 +306,13 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' Load all named objects into the specified environment.
 #'
 #' @param objNames A character vector of object names to load lazily, usually from a lazyLs call.
+#'                 If \code{NULL}, all object in lazyDir will be loaded.
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
 #'
-#' @param envir Which environment should the objects be loaded into. Default is \code{.GlobalEnv}
+#' @param envir Environment into which the objects are loaded. Default is \code{.GlobalEnv}.
 #'
-#' @return Invisibly, the objects read in returned. This function is used for its side effects, i.e., loading lazy objects
+#' @return Invisibly, the objects read in returned. This function is used for its side effects, i.e., loading lazy objects.
 #'
 #' @seealso \code{\link{lazyLs}}, \code{\link{lazyRm}}.
 #' @docType methods
@@ -338,7 +337,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 
   obsRead <- character(0)
-  on.exit(expr= {
+  on.exit(expr = {
     message(length(obsRead), " objects loaded of ", length(objNames))
     if(length(obsRead)!=length(objNames)) {
       message("Failed on ", objNames[!(objNames %in% obsRead)][1])
@@ -353,42 +352,43 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #   if(is.null(lazyDir)) {
 #     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
 #   }
-  
-  
+
   if (is.null(objNames)) {
     objNames <- unique(lazyLs(lazyDir = lazyDir))
   }
 
   lapply(objNames, function(y) {
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
-      md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir, 
+      md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
                         exact=TRUE)
 
       rasterFile <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
         filter(artifact==md5Hash) %>%
         filter(grepl("filename:", tag)) %>%
-        select(tag) 
-      
+        select(tag)
+
       # Test if it had a filename associated with it; if not, then load the rdx directly
-      if(nchar(gsub(rasterFile, pattern="filename:",replacement = ""))==0) {
-        lazyLoad(file.path(lazyDir, "gallery", md5Hash), 
-                 envir = envir)
+      if (nchar(gsub(rasterFile, pattern = "filename:", replacement = "")) == 0) {
+        lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
       } else {
-        rasterName <- gsub(rasterFile$tag, replacement = "", pattern="filename:")
-        assign(y, value=raster(rasterName), envir=envir)
+        rasterName <- gsub(rasterFile$tag, pattern="filename:", replacement = "")
+        if (file.exists(rasterName)) {
+          assign(y, value=raster(rasterName), envir=envir)
+        } else {
+          warning("Failed to load file ", rasterName, ".\n")
+        }
       }
       obsRead <<- c(obsRead,  y)
     } else {
-      md5Hash <- lazyLs(tag=y, archivistCol="artifact", 
-                        lazyDir=lazyDir, exact=TRUE)
-      
-      lazyLoad(file.path(lazyDir, "gallery", md5Hash), 
-               envir = envir)
-      
+      md5Hash <- lazyLs(tag = y, archivistCol = "artifact",
+                        lazyDir = lazyDir, exact = TRUE)
+
+      lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
+
       obsRead <<- c(obsRead,  y)
     }
   })
-  
+
   return(invisible(sort(obsRead)))
 }
 
@@ -437,12 +437,12 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
         if(lazyIs(objName, "Raster", lazyDir = lazyDir) & removeRasterFile) {
           file.remove(filename(tmpEnv[[objName]]))
         }
-        
+
         rmFromRepo(toRm, repoDir = lazyDir)
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdx")))
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdb")))
         message(paste("Object removed", objName))
-      } 
+      }
     } else {
       message(y, " not in lazy load db. Nothing removed.")
     }
@@ -457,7 +457,7 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #' This can be set and gotten with these functions, or all functions can take
 #' an argument, lazyDir, manually.
 #'
-#' @param lazyDir A character string to the directory where the lazy database should be kept. 
+#' @param lazyDir A character string to the directory where the lazy database should be kept.
 #' If \code{lazyDir=NULL}, then it removes the active lazy directory.
 #'
 #' @return New lazyDir
@@ -543,15 +543,15 @@ lazyObjectName <- function(md5Hash, lazyDir) {
     select_("tag") %>%
     gsub(.$tag, pattern="objectName:", replacement="")
   return(lazyObjectName)
-    
+
 }
 
 #' Get object class
 #'
 #' @param objName A character string indicating the object name
-#' 
+#'
 #' @param removeCharacter Logical. There is an artifact tag, class:character for any
-#' non-character object. This will be removed automatically in the return, unless this 
+#' non-character object. This will be removed automatically in the return, unless this
 #' is FALSE
 #'
 #' @return A character vector equivalent to the an \code{is(objName)} command
@@ -579,11 +579,11 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 #     lazyDir= getLazyDir()
 #   }
   out <- lazyLs(tagType = "all", lazyDir=lazyDir)
-  if(length(lazyLs(objName, exact=TRUE, 
+  if(length(lazyLs(objName, exact=TRUE,
             archivistCol = "artifact", lazyDir=lazyDir))>0) {
     out <- out %>%
-      filter(artifact==lazyLs(objName, exact=TRUE, 
-                              archivistCol = "artifact", lazyDir=lazyDir)) %>% 
+      filter(artifact==lazyLs(objName, exact=TRUE,
+                              archivistCol = "artifact", lazyDir=lazyDir)) %>%
       filter(grepl(pattern="class", tag)) %>%
       select_("tag") %>%
       gsub(x = .$tag, pattern="class:", replacement = "")
@@ -595,9 +595,7 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
     stop(paste(objName, "does not exist"))
   }
   return(out)
-    
 }
-
 
 #' Checks and sets for lazyDir
 #'
