@@ -62,7 +62,7 @@ b <- rnorm(20)
 lazySave(a, b)
 \dontrun{ # may be many objects
 lazySave(mget(ls(envir=.GlobalEnv)))
-unlink(file.path(tempdir(),"lazyDir"))
+unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 }
 }
 \author{

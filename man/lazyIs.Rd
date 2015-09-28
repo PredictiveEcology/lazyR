@@ -25,14 +25,14 @@ A character vector equivalent to the an \code{is(objName)} command
 Get object class
 }
 \examples{
-setLazyDir(file.path(tempdir(), "lazyDir"))
+setLazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
 a <- rnorm(10)
 lazySave(a)
 lazyIs("a", "numeric")
 lazyIs("a") # shows all
 lazyIs("b") # error, does not exist
 lazyRm("a")
-unlink(file.path(tempdir(), "lazyDir"))
+unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 }
 \author{
 Eliot McIntire

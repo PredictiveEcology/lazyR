@@ -6,13 +6,16 @@
 \alias{setLazyDir}
 \title{Set and get the lazyR database directory}
 \usage{
-setLazyDir(lazyDir)
+setLazyDir(lazyDir, create = FALSE)
 
 getLazyDir()
 }
 \arguments{
 \item{lazyDir}{Character string of directory to be used for the lazy databases.
 If \code{lazyDir=NULL}, then it removes the active lazy directory.}
+
+\item{create}{Logical, passed to checkLazyDir, i.e., it will create dir if it doesn't exist.
+Default is FALSE.}
 }
 \value{
 New lazyDir
@@ -23,11 +26,11 @@ an argument, lazyDir, manually.
 }
 \examples{
 \dontrun{
-setLazyDir(file.path(tempdir(), "lazyDir"))
+setLazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
 a <- rnorm(10)
 lazySave(a)
 lazyRm("a")
-unlink(file.path(tempdir(), "lazyDir"))
+unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 }
 }
 \author{
