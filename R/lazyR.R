@@ -591,7 +591,9 @@ lazyObjectName <- function(md5Hash, lazyDir=NULL) {
 #' lazySave(a)
 #' lazyIs("a", "numeric")
 #' lazyIs("a") # shows all
+#' \dontrun{
 #' lazyIs("b") # error, does not exist
+#' }
 #' lazyRm("a")
 #' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
