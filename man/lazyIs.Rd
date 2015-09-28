@@ -30,7 +30,9 @@ a <- rnorm(10)
 lazySave(a)
 lazyIs("a", "numeric")
 lazyIs("a") # shows all
+\dontrun{
 lazyIs("b") # error, does not exist
+}
 lazyRm("a")
 unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 }
