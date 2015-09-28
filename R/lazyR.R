@@ -543,12 +543,13 @@ getLazyDir <- function() {
 #' @export
 #' @examples
 #' \dontrun{
-#' z <- lazyLs(y, archivistCol = "artifact", lazyDir=lazyDir, exact=exact)
-#' objName <- lazyObjectName(z, lazyDir=lazyDir)
-
-
+#' a <- rnorm(10)
+#' lazySave(a) # default uses an tempdir() call for location
+#' hash <- lazyLs("a", archivistCol = "artifact", exact=TRUE)
+#' objName <- lazyObjectName(hash)
+#' unlink(file.path(tempdir(),"lazyDir"))
 #' }
-lazyObjectName <- function(md5Hash, lazyDir) {
+lazyObjectName <- function(md5Hash, lazyDir=NULL) {
   lazyDir <- checkLazyDir(lazyDir)
   lazyObjectName <- showLocalRepo(method="tags", repoDir = lazyDir) %>% 
     filter(artifact==md5Hash) %>% 
@@ -641,7 +642,7 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
                           error=function(x) NULL)
       if(is.null(lazyDir)) 
         stop("Please specify a lazyDir that exists, or set it via setLazyDir(). Nothing to do.")
-      message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
+#      message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
     }
   }
   
