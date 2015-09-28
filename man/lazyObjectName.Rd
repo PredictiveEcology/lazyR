@@ -9,6 +9,8 @@ lazyObjectName(md5Hash, lazyDir)
 }
 \arguments{
 \item{md5Hash}{A character string indicating the md5hash value to look up the object name}
+
+\item{lazyDir}{Character string of directory to be used for the lazy databases.}
 }
 \value{
 An object name

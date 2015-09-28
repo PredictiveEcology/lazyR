@@ -8,7 +8,7 @@
 checkLazyDir(lazyDir = NULL, create = FALSE)
 }
 \arguments{
-\item{lazyDir}{A character string of the lazyDir path}
+\item{lazyDir}{Character string of directory to be used for the lazy databases.}
 
 \item{create}{A logical. If \code{TRUE}, it will create the directory specified with \code{lazyDir}}
 }
@@ -20,8 +20,10 @@ temp directory
 Checks and sets for lazyDir
 }
 \examples{
-checkLazyDir() # because missing, it will
+\dontrun{
+checkLazyDir() # because missing, it will provide a tmpdir
 unlink(file.path(tempdir(), "lazyDir"))
+}
 }
 \author{
 Eliot McIntire

@@ -12,7 +12,8 @@ lazySave(..., lazyDir = NULL, tags = NULL, clearRepo = FALSE,
 \arguments{
 \item{...}{Objects to save to an R lazy database, with metadata saved via archivist package repository.}
 
-\item{lazyDir}{Character string of directory to be used for the lazy databases. This creates an archivist repository.}
+\item{lazyDir}{Character string of directory to be used for the lazy databases.
+This creates an archivist repository.}
 
 \item{tags}{Character vector of additional tags to add to the objects being saved}
 
@@ -25,18 +26,17 @@ Default TRUE, which may be slow. See Details.}
 
 \item{compareRasterFileLength}{Numeric. This is passed to the length arg in \code{digest}
 when determining if the Raster file is already in the database. Default 1e6. See Details.}
-
-\item{overwrite}{Logical. Should new object replace (i.e,. overwrite) previous object with same name}
 }
 \value{
 invisibly returns a character vector of objects saved.
 }
 \description{
-This function creates an archivist repository that holds metadata ("tags") associated
-with the object. Unlike the archivist package, the objects themselves are saved as
-lazy load databases (i.e., via tools:::makeLazyLoadDB). Each object is saved into its own
-lazy load database, with a filename that matches the object name. Because it is also an
-archivist repository, lazy loading of objects can be done via tags, classes etc..
+This function creates an archivist repository that holds metadata ("tags")
+associated with the object. Unlike the \code{archivist} package, the objects
+themselves are saved as lazy load databases (i.e., via tools:::makeLazyLoadDB).
+Each object is saved into its own lazy load database, with a filename that
+matches the object name. Because it is also an archivist repository, lazy
+loading of objects can be done via tags, classes etc..
 }
 \details{
 The main use case for this is large, complicated datasets, such as GIS databases, that

@@ -16,7 +16,10 @@ LazyData: true
 Depends:
     archivist
 Imports:
+    digest,
     dplyr,
-    magrittr
+    magrittr,
+    raster,
+    SpaDES
 Collate:
     'lazyR.R'

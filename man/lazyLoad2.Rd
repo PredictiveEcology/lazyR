@@ -8,14 +8,15 @@
 lazyLoad2(objNames = NULL, lazyDir = NULL, envir = parent.frame())
 }
 \arguments{
-\item{objNames}{A character vector of object names to load lazily, usually from a lazyLs call.}
+\item{objNames}{A character vector of object names to load lazily, usually from a lazyLs call.
+                If \code{NULL}, all object in lazyDir will be loaded.}
 
 \item{lazyDir}{Character string of directory to be used for the lazy databases.}
 
-\item{envir}{Which environment should the objects be loaded into. Default is \code{.GlobalEnv}}
+\item{envir}{Environment into which the objects are loaded. Default is \code{.GlobalEnv}.}
 }
 \value{
-Invisibly, the objects read in returned. This function is used for its side effects, i.e., loading lazy objects
+Invisibly, the objects read in returned. This function is used for its side effects, i.e., loading lazy objects.
 }
 \description{
 Load all named objects into the specified environment.
