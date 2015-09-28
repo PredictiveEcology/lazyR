@@ -1,6 +1,6 @@
 Package: lazyR
 Title: Create lazyLoad databases for R objects
-Version: 0.0.0.9003
+Version: 0.0.0.9005
 Date: 2015-09-28
 Authors@R: c(
   person(c("Eliot", "J", "B"), "McIntire", email="eliot.mcintire@canada.ca",

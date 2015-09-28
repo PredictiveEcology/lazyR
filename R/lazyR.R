@@ -73,11 +73,11 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
   objList <- list(...)
   objNames <- NULL
 
-
-#   if(is.null(lazyDir)) {
+#   if (is.null(lazyDir)) {
 #     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
 #     message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
 #   }
+
   if (is(objList[[1]], "list")) {
     objList <- objList[[1]]
   }
@@ -96,10 +96,10 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 
   lazyDir <- checkLazyDir(lazyDir, create=TRUE)
 #   if (!is.null(getLazyDir())) {
-#     lazyDir <- getLazyDir() 
+#     lazyDir <- getLazyDir()
 #   }
-# 
-#   if(is.null(lazyDir)) {
+#
+#   if (is.null(lazyDir)) {
 #     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
 #     message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
 #   }
@@ -124,28 +124,27 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
       )
       if (firstOne) {
         if (!overwrite) {
-          message("Object ", objName, " is already in the database. ",
-                  "Use overwrite=TRUE to replace it")
+          message(paste("Object", objName, "is already in the database.",
+                  "Use overwrite=TRUE to replace it."))
           shouldSave <- FALSE
         } else {
           lazyRm(objName)
         }
-
       }
       if (shouldSave) {
+        if (is(obj, "Raster")) {
+          if (copyRasterFile & !inMemory(obj)) {
+            curFilename <- normalizePath(filename(obj), winslash = "/")
+            checkPath(file.path(lazyDir, "rasters"), create=TRUE)
 
-        if (is(obj, "Raster")){
-          if(copyRasterFile & !inMemory(obj)){
-            curFilename <- normalizePath(filename(obj))
-            checkPath(file.path(lazyDir,"rasters"), create=TRUE)
+            saveFilename <- file.path(getLazyDir(), "rasters", basename(curFilename)) %>%
+              normalizePath(., winslash = "/", mustWork=FALSE)
 
-            saveFilename <- normalizePath(file.path(getLazyDir(),"rasters",basename(curFilename)),
-                                          mustWork=FALSE)
-            if(saveFilename!=curFilename) {
+            if (saveFilename!=curFilename) {
               shouldCopy <- TRUE
-              if(file.exists(saveFilename)) {
-                if(!(compareRasterFileLength==Inf)) {
-                  if(digest(file = saveFilename, length=compareRasterFileLength)==
+              if (file.exists(saveFilename)) {
+                if (!(compareRasterFileLength==Inf)) {
+                  if (digest(file = saveFilename, length=compareRasterFileLength)==
                        digest(file = curFilename, length=compareRasterFileLength)) {
                     shouldCopy <- FALSE
                   }
@@ -153,7 +152,7 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
                   shouldCopy = TRUE
                 }
               }
-              if(shouldCopy) {
+              if (shouldCopy) {
                 file.copy(to = saveFilename, overwrite = TRUE,
                         recursive = FALSE, copy.mode = TRUE,
                         from = curFilename)
@@ -165,8 +164,8 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
           }
           saveToRepo(objName, repoDir = lazyDir,
                      userTags = c(paste0("objectName:", objName), tags,
-                                 paste0("class:", is(obj)),
-                                 paste0("filename:", saveFilename)
+                                  paste0("class:", is(obj)),
+                                  paste0("filename:", saveFilename)
                                 ))
         } else {
           saveToRepo(objName, repoDir = lazyDir,
@@ -177,7 +176,7 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
         md5Hash <- lazyLs(tag=objName, archivistCol = "artifact", lazyDir = lazyDir, exact = TRUE)
 
         # Add tags by class
-        if(is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
+        if (is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
                                                   repoDir = lazyDir)
 
       # Save the actual objects as lazy load databases
@@ -212,7 +211,7 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 #'
 #' @return A character vector that matches the tagType, tag, and archivistCol requested.
 #'
-#' @seealso \code{\link{lazyLs}}, \code{\link{lazyRm}}, \code{\link{lazyLoad2}}, 
+#' @seealso \code{\link{lazyLs}}, \code{\link{lazyRm}}, \code{\link{lazyLoad2}},
 #' \code{\link{lazyIs}}.
 #' @docType methods
 #' @rdname lazyLs
@@ -251,7 +250,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
                    archivistCol="tag",
                    exact=FALSE) {
 
-  if(tagType=="all") {
+  if (tagType=="all") {
     tagTypeAll <- TRUE
     tagType <- ""
   } else {
@@ -260,13 +259,13 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 
   # check that lzyDir is specified, if not, use getLazyDir, if still nothing, then use temp
   lazyDir <- checkLazyDir(lazyDir)
-#   if(is.null(lazyDir)){
+#   if (is.null(lazyDir)) {
 #     lazyDir= getLazyDir()
-#     if(is.null(lazyDir)) {
+#     if (is.null(lazyDir)) {
 #       lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
 #     }
 #   }
-#   
+#
 #   if (!dir.exists(lazyDir)) {
 #     stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
 #                 "or with setLazyDir()."))
@@ -281,7 +280,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 
       tag2 <- tag # creates confusion in dplyr because tag is a column name in
                   # showLocalRepo and an argument in this function
-      if(exact) {
+      if (exact) {
         a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
           filter(grepl(paste0("^",tagType,tag2,"$"), tag)) %>%
           select_("artifact")
@@ -294,7 +293,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
       b <- left_join(a, b, by="artifact") %>%
         distinct_
     }
-    if(tagTypeAll) {
+    if (tagTypeAll) {
       out <- b
     } else {
       out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "") %>% sort
@@ -340,7 +339,7 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
   obsRead <- character(0)
   on.exit(expr = {
     message(length(obsRead), " objects loaded of ", length(objNames))
-    if(length(obsRead)!=length(objNames)) {
+    if (length(obsRead)!=length(objNames)) {
       message("Failed on ", objNames[!(objNames %in% obsRead)][1])
     }})
 
@@ -349,8 +348,8 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
 #       gsub(pattern = "/$", x=., replacement = "")
 #   }
-# 
-#   if(is.null(lazyDir)) {
+#
+#   if (is.null(lazyDir)) {
 #     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
 #   }
 
@@ -400,9 +399,9 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #' @param objNames A character vector of names of objects to be removed from a \code{lazyR} database.
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
-#' 
+#'
 #' @param exact Should the character string matching be exact, i.e., ^objNames$ in regexp.
-#' 
+#'
 #' @param removeRasterFile Logical. If true then the source raster file will be removed in addition to the
 #' database entry. This is only true if the file is in the lazyDir
 #'
@@ -435,11 +434,11 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 
   lapply(objNames, function(y) {
     z <- lazyLs(y, archivistCol = "artifact", lazyDir=lazyDir, exact=exact)
-    if(length(z)>0) {
+    if (length(z)>0) {
       for (toRm in z) {
         objName <- lazyObjectName(toRm, lazyDir=lazyDir)
 
-        if(lazyIs(objName, "Raster", lazyDir = lazyDir) & removeRasterFile) {
+        if (lazyIs(objName, "Raster", lazyDir = lazyDir) & removeRasterFile) {
           tmpEnv <- new.env()
           lazyLoad2(objName, envir = tmpEnv)
           file.remove(filename(tmpEnv[[objName]]))
@@ -466,8 +465,8 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
 #' If \code{lazyDir=NULL}, then it removes the active lazy directory.
-#' 
-#' @param create Logical, passed to checkLazyDir, i.e., it will create dir if it doesn't exist. 
+#'
+#' @param create Logical, passed to checkLazyDir, i.e., it will create dir if it doesn't exist.
 #' Default is FALSE.
 #'
 #' @return New lazyDir
@@ -490,9 +489,9 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 setLazyDir <- function(lazyDir, create=FALSE) {
 
   lazyDir <- checkLazyDir(lazyDir, create = create)
-  
-#   if(is.null(lazyDir)) {
-#     if(exists(".lazyDir", envir = .lazyREnv)){
+
+#   if (is.null(lazyDir)) {
+#     if (exists(".lazyDir", envir = .lazyREnv)) {
 #       rm(".lazyDir", envir = .lazyREnv)
 #       return("removed lazyDir")
 #     } else {
@@ -503,10 +502,13 @@ setLazyDir <- function(lazyDir, create=FALSE) {
   if (!file.exists(lazyDir)) {
     dir.create(lazyDir)
   }
-  lazyDir <- normalizePath(lazyDir)
+  lazyDir <- normalizePath(lazyDir, winslash = "/")
   assign(".lazyDir", lazyDir, envir = .lazyREnv)
-  setLocalRepo(lazyDir) # Must set the archivist location too, for internal archivist functions
-  return(paste("Local lazyR database set to",lazyDir))
+
+  # Must set the archivist location too, for internal archivist functions:
+  setLocalRepo(lazyDir)
+
+  return(paste("Local lazyR database set to", lazyDir))
 }
 
 #' @rdname lazyDir
@@ -515,7 +517,7 @@ getLazyDir <- function() {
   if (exists(".lazyDir", envir = .lazyREnv)) {
     get(".lazyDir", envir = .lazyREnv) %>%
       gsub(pattern = "/$", x=., replacement = "") %>%
-      gsub(pattern = "\\$", x=., replacement = "") 
+      gsub(pattern = "\\$", x=., replacement = "")
   } else {
     NULL
   }
@@ -534,7 +536,7 @@ getLazyDir <- function() {
 #' @param md5Hash A character string indicating the md5hash value to look up the object name
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
-#' 
+#'
 #' @return An object name
 #'
 #' @importFrom archivist showLocalRepo
@@ -555,8 +557,8 @@ getLazyDir <- function() {
 #' }
 lazyObjectName <- function(md5Hash, lazyDir=NULL) {
   lazyDir <- checkLazyDir(lazyDir)
-  lazyObjectName <- showLocalRepo(method="tags", repoDir = lazyDir) %>% 
-    filter(artifact==md5Hash) %>% 
+  lazyObjectName <- showLocalRepo(method="tags", repoDir = lazyDir) %>%
+    filter(artifact==md5Hash) %>%
     filter(grepl(pattern="objectName:", tag)) %>%
     select_("tag") %>%
     gsub(.$tag, pattern="objectName:", replacement="")
@@ -567,13 +569,13 @@ lazyObjectName <- function(md5Hash, lazyDir=NULL) {
 #' Get object class
 #'
 #' @param objName A character string indicating the object name
-#' 
+#'
 #' @param class2 An optional character string of the class to test against
 #'
 #' @param removeCharacter Logical. There is an artifact tag, class:character for any
 #' non-character object. This will be removed automatically in the return, unless this
 #' is FALSE
-#' 
+#'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
 #'
 #' @return A character vector equivalent to the an \code{is(objName)} command
@@ -591,17 +593,21 @@ lazyObjectName <- function(md5Hash, lazyDir=NULL) {
 #' lazySave(a)
 #' lazyIs("a", "numeric")
 #' lazyIs("a") # shows all
-#' lazyIs("b") # error, does not exist
 #' lazyRm("a")
+#'
+#' \dontrun{
+#' lazyIs("b") # error, does not exist
+#' }
+#'
 #' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
-lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
+lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL) {
 
   lazyDir <- checkLazyDir(lazyDir)
-#   if(is.null(lazyDir)){
+#   if (is.null(lazyDir)) {
 #     lazyDir= getLazyDir()
 #   }
   out <- lazyLs(tagType = "all", lazyDir=lazyDir)
-  if(length(lazyLs(objName, exact=TRUE,
+  if (length(lazyLs(objName, exact=TRUE,
             archivistCol = "artifact", lazyDir=lazyDir))>0) {
     out <- out %>%
       filter(artifact==lazyLs(objName, exact=TRUE,
@@ -609,9 +615,9 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
       filter(grepl(pattern="class", tag)) %>%
       select_("tag") %>%
       gsub(x = .$tag, pattern="class:", replacement = "")
-  if(removeCharacter)
+  if (removeCharacter)
     out <- out[!grepl(x = out, pattern="character")]
-  if(!is.null(class2))
+  if (!is.null(class2))
     out <- any(out==class2)
   } else {
     stop(paste(objName, "does not exist"))
@@ -622,10 +628,10 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 #' Checks and sets for lazyDir
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
-#' 
+#'
 #' @param create A logical. If \code{TRUE}, it will create the directory specified with \code{lazyDir}
-#' 
-#' @return Directory of lazyDir. If it was not specified, then it returns a 
+#'
+#' @return Directory of lazyDir. If it was not specified, then it returns a
 #' temp directory
 #'
 #' @docType methods
@@ -639,21 +645,21 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 #' }
 checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
   # check that lazyDir is specified, if not, use getLazyDir, if still nothing, then use temp
-  if(is.null(lazyDir)){
+  if (is.null(lazyDir)) {
     lazyDir= getLazyDir()
-    if(is.null(lazyDir)) {
+    if (is.null(lazyDir)) {
       lazyDir <- tryCatch(checkPath(file.path(tempdir(), "lazyDir"), create=create),
                           error=function(x) NULL)
-      if(is.null(lazyDir)) 
+      if (is.null(lazyDir))
         stop("Please specify a lazyDir that exists, or set it via setLazyDir(). Nothing to do.")
       message("Setting lazy directory via setLazyDir(",lazyDir,")")
       setLazyDir(lazyDir)
 #      message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
     }
   }
-  
+
   if (!dir.exists(lazyDir)) {
-    if(create) {
+    if (create) {
       dir.create(lazyDir)
     } else {
       stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
@@ -662,4 +668,3 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
   }
   return(lazyDir)
 }
-  
