@@ -543,6 +543,10 @@ getLazyDir <- function() {
 #' @export
 #' @examples
 #' \dontrun{
+#' z <- lazyLs(y, archivistCol = "artifact", lazyDir=lazyDir, exact=exact)
+#' objName <- lazyObjectName(z, lazyDir=lazyDir)
+
+
 #' }
 lazyObjectName <- function(md5Hash, lazyDir) {
   lazyDir <- checkLazyDir(lazyDir)
@@ -629,7 +633,6 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 #' unlink(file.path(tempdir(), "lazyDir"))
 #' }
 checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
-  browser()
   # check that lazyDir is specified, if not, use getLazyDir, if still nothing, then use temp
   if(is.null(lazyDir)){
     lazyDir= getLazyDir()
