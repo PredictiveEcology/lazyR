@@ -51,7 +51,8 @@ lazyLs(tag = "numeric") # object names of a and b
 
 # To return the values of different tags, use the tagType argument
 lazyLs(tagType="objectName:") # Just object names, the default
-lazyLs(tagType="class:")      # All classes in the database
+lazyLs(tagType="class:")      # All classes in the database,
+                              #returns multiple lines per object
 lazyLs(tagType="all")         # returns all information in the database
 unlink(tmpdir, recursive = TRUE)
 }
@@ -60,6 +61,7 @@ unlink(tmpdir, recursive = TRUE)
 Eliot McIntire
 }
 \seealso{
-\code{\link{lazyLs}}, \code{\link{lazyRm}}, \code{\link{lazyLoad2}}.
+\code{\link{lazyLs}}, \code{\link{lazyRm}}, \code{\link{lazyLoad2}},
+\code{\link{lazyIs}}.
 }
 

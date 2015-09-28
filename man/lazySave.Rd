@@ -6,7 +6,8 @@
 \title{Save objects to a \code{lazyR} database}
 \usage{
 lazySave(..., lazyDir = NULL, tags = NULL, clearRepo = FALSE,
-  overwrite = FALSE)
+  overwrite = FALSE, copyRasterFile = TRUE,
+  compareRasterFileLength = 1e+06)
 }
 \arguments{
 \item{...}{Objects to save to an R lazy database, with metadata saved via archivist package repository.}
@@ -18,6 +19,14 @@ lazySave(..., lazyDir = NULL, tags = NULL, clearRepo = FALSE,
 \item{clearRepo}{Logical. Should the repository be deleted before adding new objects}
 
 \item{overwrite}{Logical. Should new object replace (i.e., overwrite) previous object with same name}
+
+\item{copyRasterFile}{Logical. Should the source file for rasters be copied into the lazyDir.
+Default TRUE, which may be slow. See Details.}
+
+\item{compareRasterFileLength}{Numeric. This is passed to the length arg in \code{digest}
+when determining if the Raster file is already in the database. Default 1e6. See Details.}
+
+\item{overwrite}{Logical. Should new object replace (i.e,. overwrite) previous object with same name}
 }
 \value{
 invisibly returns a character vector of objects saved.
@@ -33,13 +42,27 @@ archivist repository, lazy loading of objects can be done via tags, classes etc.
 The main use case for this is large, complicated datasets, such as GIS databases, that
 are used within R. Loading them lazily means that the user can have access to all of them,
 including their characteristics, without loading them all first (could be very slow).
+When \code{copyRasterFile} is \code{TRUE}, it may take a while as the original source
+file is copied. Also, the slot in the raster file that indicates the file pointer
+is switched to new location. This allows more modular lazyR database, i.e., if the Raster
+files are copied into the lazyR database, then the whole database contains everything needed
+to copy to another machine. Note: If \code{copyRasterFile} is TRUE, but the file is already
+there and is identical (using \code{\link[digest]{digest}}), then no copy is done.
+
+When \code{copyRasterFile} is \code{TRUE}, it will actually run a \code{digest}
+command on the file, if it already exists in the rasters directory of the lazyR database.
+If this hash resulting from the \code{digest} indicates that the file is already there and
+it is identical, then it will not actually be copied. This will be good for speed, but
+will miss small changes in files. Set \code{compareRasterFileLength} to \code{Inf} if
+truly exact comparisons behaviour is needed.
 }
 \examples{
 a <- rnorm(10)
 b <- rnorm(20)
 lazySave(a, b)
-\dontrun{
+\dontrun{ # may be many objects
 lazySave(mget(ls(envir=.GlobalEnv)))
+unlink(file.path(tempdir(),"lazyDir"))
 }
 }
 \author{
