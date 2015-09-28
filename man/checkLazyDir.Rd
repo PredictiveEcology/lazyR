@@ -21,8 +21,8 @@ Checks and sets for lazyDir
 }
 \examples{
 \dontrun{
-checkLazyDir() # because missing, it will provide a tmpdir
-unlink(file.path(tempdir(), "lazyDir"))
+checkLazyDir(create=TRUE) # because missing, it will provide a tmpdir
+unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 }
 }
 \author{

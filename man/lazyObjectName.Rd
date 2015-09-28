@@ -5,7 +5,7 @@
 \alias{lazyObjectName}
 \title{Get object name with an md5hash}
 \usage{
-lazyObjectName(md5Hash, lazyDir)
+lazyObjectName(md5Hash, lazyDir = NULL)
 }
 \arguments{
 \item{md5Hash}{A character string indicating the md5hash value to look up the object name}
@@ -20,6 +20,11 @@ Get object name with an md5hash
 }
 \examples{
 \dontrun{
+a <- rnorm(10)
+lazySave(a) # default uses an tempdir() call for location
+hash <- lazyLs("a", archivistCol = "artifact", exact=TRUE)
+objName <- lazyObjectName(hash)
+unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 }
 }
 \author{
