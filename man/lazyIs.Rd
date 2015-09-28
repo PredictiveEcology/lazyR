@@ -10,9 +10,13 @@ lazyIs(objName, class2 = NULL, removeCharacter = TRUE, lazyDir = NULL)
 \arguments{
 \item{objName}{A character string indicating the object name}
 
+\item{class2}{An optional character string of the class to test against}
+
 \item{removeCharacter}{Logical. There is an artifact tag, class:character for any
 non-character object. This will be removed automatically in the return, unless this
 is FALSE}
+
+\item{lazyDir}{Character string of directory to be used for the lazy databases.}
 }
 \value{
 A character vector equivalent to the an \code{is(objName)} command

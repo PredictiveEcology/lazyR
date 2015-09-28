@@ -11,7 +11,7 @@ setLazyDir(lazyDir)
 getLazyDir()
 }
 \arguments{
-\item{lazyDir}{A character string to the directory where the lazy database should be kept.
+\item{lazyDir}{Character string of directory to be used for the lazy databases.
 If \code{lazyDir=NULL}, then it removes the active lazy directory.}
 }
 \value{

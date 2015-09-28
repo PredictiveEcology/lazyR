@@ -31,7 +31,8 @@ if (getRversion() >= "3.1.0") {
 #'
 #' @param ... Objects to save to an R lazy database, with metadata saved via archivist package repository.
 #'
-#' @param lazyDir Character string of directory to be used for the lazy databases. This creates an archivist repository.
+#' @param lazyDir Character string of directory to be used for the lazy databases.
+#' This creates an archivist repository.
 #'
 #' @param tags Character vector of additional tags to add to the objects being saved
 #'
@@ -53,8 +54,8 @@ if (getRversion() >= "3.1.0") {
 #' @author Eliot McIntire
 #' @export
 #' @importClassesFrom SpaDES spatialObjects
-#' @importFrom raster crs
-#' @importFrom archivist deleteRepo createEmptyRepo saveToRepo
+#' @importFrom raster crs inMemory filename
+#' @importFrom archivist deleteRepo createEmptyRepo saveToRepo addTagsRepo
 #' @importFrom magrittr %>%
 #' @importFrom digest digest
 #' @importFrom SpaDES checkPath
@@ -144,8 +145,8 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
               shouldCopy <- TRUE
               if(file.exists(saveFilename)) {
                 if(!(compareRasterFileLength==Inf)) {
-                  if(digest(objName = saveFilename, length=compareRasterFileLength)==
-                       digest(objName = curFilename, length=compareRasterFileLength)) {
+                  if(digest(file = saveFilename, length=compareRasterFileLength)==
+                       digest(file = curFilename, length=compareRasterFileLength)) {
                     shouldCopy <- FALSE
                   }
                 } else {
@@ -399,6 +400,11 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #' @param objNames A character vector of names of objects to be removed from a \code{lazyR} database.
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
+#' 
+#' @param exact Should the character string matching be exact, i.e., ^objNames$ in regexp.
+#' 
+#' @param removeRasterFile Logical. If true then the source raster file will be removed in addition to the
+#' database entry. This is only true if the file is in the lazyDir
 #'
 #' @return Nothing returned. This function is used for its side effects, i.e., loading lazy objects
 #'
@@ -408,6 +414,7 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #' @author Eliot McIntire
 #' @export
 #' @importFrom archivist rmFromRepo
+#' @importFrom raster filename
 #' @examples
 #' \dontrun{
 #' a <- rnorm(10)
@@ -432,9 +439,9 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
       for (toRm in z) {
         objName <- lazyObjectName(toRm, lazyDir=lazyDir)
 
-        #tmpEnv <- new.env()
-        #lazyLoad2(objName, envir = tmpEnv)
         if(lazyIs(objName, "Raster", lazyDir = lazyDir) & removeRasterFile) {
+          tmpEnv <- new.env()
+          lazyLoad2(objName, envir = tmpEnv)
           file.remove(filename(tmpEnv[[objName]]))
         }
 
@@ -457,7 +464,7 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #' This can be set and gotten with these functions, or all functions can take
 #' an argument, lazyDir, manually.
 #'
-#' @param lazyDir A character string to the directory where the lazy database should be kept.
+#' @param lazyDir Character string of directory to be used for the lazy databases.
 #' If \code{lazyDir=NULL}, then it removes the active lazy directory.
 #'
 #' @return New lazyDir
@@ -522,6 +529,8 @@ getLazyDir <- function() {
 #'
 #' @param md5Hash A character string indicating the md5hash value to look up the object name
 #'
+#' @param lazyDir Character string of directory to be used for the lazy databases.
+#' 
 #' @return An object name
 #'
 #' @importFrom archivist showLocalRepo
@@ -549,10 +558,14 @@ lazyObjectName <- function(md5Hash, lazyDir) {
 #' Get object class
 #'
 #' @param objName A character string indicating the object name
+#' 
+#' @param class2 An optional character string of the class to test against
 #'
 #' @param removeCharacter Logical. There is an artifact tag, class:character for any
 #' non-character object. This will be removed automatically in the return, unless this
 #' is FALSE
+#' 
+#' @param lazyDir Character string of directory to be used for the lazy databases.
 #'
 #' @return A character vector equivalent to the an \code{is(objName)} command
 #'
@@ -599,7 +612,7 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 
 #' Checks and sets for lazyDir
 #'
-#' @param lazyDir A character string of the lazyDir path
+#' @param lazyDir Character string of directory to be used for the lazy databases.
 #' 
 #' @param create A logical. If \code{TRUE}, it will create the directory specified with \code{lazyDir}
 #' 
@@ -611,9 +624,12 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 #' @rdname checkLazyDir
 #' @export
 #' @examples
+#' \dontrun{
 #' checkLazyDir() # because missing, it will provide a tmpdir
 #' unlink(file.path(tempdir(), "lazyDir"))
+#' }
 checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
+  browser()
   # check that lazyDir is specified, if not, use getLazyDir, if still nothing, then use temp
   if(is.null(lazyDir)){
     lazyDir= getLazyDir()

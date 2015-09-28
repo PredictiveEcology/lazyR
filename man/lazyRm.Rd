@@ -5,13 +5,18 @@
 \alias{lazyRm}
 \title{Load lazy objects from a \code{lazyR} database}
 \usage{
-lazyRm(objNames = NULL, lazyDir = "lazyDir", exact = TRUE,
+lazyRm(objNames = NULL, lazyDir = NULL, exact = TRUE,
   removeRasterFile = FALSE)
 }
 \arguments{
 \item{objNames}{A character vector of names of objects to be removed from a \code{lazyR} database.}
 
 \item{lazyDir}{Character string of directory to be used for the lazy databases.}
+
+\item{exact}{Should the character string matching be exact, i.e., ^objNames$ in regexp.}
+
+\item{removeRasterFile}{Logical. If true then the source raster file will be removed in addition to the
+database entry. This is only true if the file is in the lazyDir}
 }
 \value{
 Nothing returned. This function is used for its side effects, i.e., loading lazy objects
