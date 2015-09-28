@@ -65,7 +65,7 @@ if (getRversion() >= "3.1.0") {
 #' lazySave(a, b)
 #' \dontrun{ # may be many objects
 #' lazySave(mget(ls(envir=.GlobalEnv)))
-#' unlink(file.path(tempdir(),"lazyDir"))
+#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 #' }
 lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
                      overwrite=FALSE, copyRasterFile=TRUE,
@@ -448,7 +448,7 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
         rmFromRepo(toRm, repoDir = lazyDir)
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdx")))
         unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdb")))
-        message(paste("Object removed", objName))
+        message(paste("Object removed:", objName))
       }
     } else {
       message(y, " not in lazy load db. Nothing removed.")
@@ -466,6 +466,9 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
 #' If \code{lazyDir=NULL}, then it removes the active lazy directory.
+#' 
+#' @param create Logical, passed to checkLazyDir, i.e., it will create dir if it doesn't exist. 
+#' Default is FALSE.
 #'
 #' @return New lazyDir
 #'
@@ -478,14 +481,15 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #' @export
 #' @examples
 #' \dontrun{
-#' setLazyDir(file.path(tempdir(), "lazyDir"))
+#' setLazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
 #' a <- rnorm(10)
 #' lazySave(a)
 #' lazyRm("a")
-#' unlink(file.path(tempdir(), "lazyDir"))
+#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 #' }
-setLazyDir <- function(lazyDir) {
-  lazyDir <- checkLazyDir(lazyDir)
+setLazyDir <- function(lazyDir, create=FALSE) {
+
+  lazyDir <- checkLazyDir(lazyDir, create = create)
   
 #   if(is.null(lazyDir)) {
 #     if(exists(".lazyDir", envir = .lazyREnv)){
@@ -547,7 +551,7 @@ getLazyDir <- function() {
 #' lazySave(a) # default uses an tempdir() call for location
 #' hash <- lazyLs("a", archivistCol = "artifact", exact=TRUE)
 #' objName <- lazyObjectName(hash)
-#' unlink(file.path(tempdir(),"lazyDir"))
+#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 #' }
 lazyObjectName <- function(md5Hash, lazyDir=NULL) {
   lazyDir <- checkLazyDir(lazyDir)
@@ -582,14 +586,14 @@ lazyObjectName <- function(md5Hash, lazyDir=NULL) {
 #' @rdname lazyIs
 #' @export
 #' @examples
-#' setLazyDir(file.path(tempdir(), "lazyDir"))
+#' setLazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
 #' a <- rnorm(10)
 #' lazySave(a)
 #' lazyIs("a", "numeric")
 #' lazyIs("a") # shows all
 #' lazyIs("b") # error, does not exist
 #' lazyRm("a")
-#' unlink(file.path(tempdir(), "lazyDir"))
+#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 
   lazyDir <- checkLazyDir(lazyDir)
@@ -630,8 +634,8 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL){
 #' @export
 #' @examples
 #' \dontrun{
-#' checkLazyDir() # because missing, it will provide a tmpdir
-#' unlink(file.path(tempdir(), "lazyDir"))
+#' checkLazyDir(create=TRUE) # because missing, it will provide a tmpdir
+#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 #' }
 checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
   # check that lazyDir is specified, if not, use getLazyDir, if still nothing, then use temp
@@ -642,6 +646,8 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
                           error=function(x) NULL)
       if(is.null(lazyDir)) 
         stop("Please specify a lazyDir that exists, or set it via setLazyDir(). Nothing to do.")
+      message("Setting lazy directory via setLazyDir(",lazyDir,")")
+      setLazyDir(lazyDir)
 #      message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
     }
   }
