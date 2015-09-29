@@ -298,6 +298,8 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' @param objNames A character vector of object names to load lazily, usually from a lazyLs call.
 #'                 If \code{NULL}, all object in lazyDir will be loaded.
 #'
+#' @param md5Hashes Object hash.
+#'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
 #'
 #' @param envir Environment into which the objects are loaded. Default is \code{.GlobalEnv}.
