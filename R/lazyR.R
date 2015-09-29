@@ -154,6 +154,8 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
                 }
               }
               if(shouldCopy) {
+                pathExists <- file.exists(dirname(saveFilename))
+                if(!pathExists) dir.create(dirname(saveFilename))
                 file.copy(to = saveFilename, overwrite = TRUE,
                         recursive = FALSE, copy.mode = TRUE,
                         from = curFilename)
@@ -335,8 +337,8 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' lazyLoad2("obj", lazyDir=tmpdir)
 #' any(ls()=="obj") # Is TRUE
 #' unlink(tmpdir, recursive = TRUE)
-lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
-
+lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.frame()) {
+  
   obsRead <- character(0)
   on.exit(expr = {
     message(length(obsRead), " objects loaded of ", length(objNames))
@@ -354,14 +356,21 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
 #     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
 #   }
 
-  if (is.null(objNames)) {
+  if(!is.null(md5Hashes)) {
+    objNames <- md5Hashes
+  }
+  if (is.null(objNames) & is.null(md5Hashes)) {
     objNames <- unique(lazyLs(lazyDir = lazyDir))
   }
 
   lapply(objNames, function(y) {
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
-      md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
+      if(is.null(md5Hashes)) {
+        md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
                         exact=TRUE)
+      } else {
+        md5Hash <- y
+      }
 
       rasterFile <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
         filter(artifact==md5Hash) %>%
@@ -381,9 +390,12 @@ lazyLoad2 <- function(objNames=NULL, lazyDir=NULL, envir=parent.frame()) {
       }
       obsRead <<- c(obsRead,  y)
     } else {
-      md5Hash <- lazyLs(tag = y, archivistCol = "artifact",
-                        lazyDir = lazyDir, exact = TRUE)
-
+      if(is.null(md5Hashes)) {
+        md5Hash <- lazyLs(tag = y, archivistCol = "artifact",
+                          lazyDir = lazyDir, exact = TRUE)
+      } else {
+        md5Hash <- y
+      }
       lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
 
       obsRead <<- c(obsRead,  y)
@@ -664,4 +676,44 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
   }
   return(lazyDir)
 }
-  
+
+# The following is an attempt to rewrite the cache function to work
+#  with lazyR databases. It doesn't work at this point because we 
+# can't do a lazy return of an 
+# object. We can only do delayedAssign, which can't be used within a
+# return() call.  Therefore, we can't return the lazy object in an 
+# <- assignment call. Also, because all objects are given the default object
+# name via a substitute call in the saveToRepo function, every object has
+# the same name, i.e., output in the case below.
+# @export
+# @importFrom lazyeval lazy_
+# @importFrom pryr %d-%
+# lazyCache <- function(lazyDir, FUN, ..., notOlderThan=NULL)
+# #function (cacheRepo = NULL, FUN, ..., notOlderThan = NULL) 
+# {
+#   tmpl <- list(...)
+#   tmpl$.FUN <- FUN
+#   outputHash <- digest(tmpl)
+#   localTags <- showLocalRepo(lazyDir, "tags")
+#   isInRepo <- localTags[localTags$tag == paste0("cacheId:", 
+#                                                 outputHash), , drop = FALSE]
+#   if (nrow(isInRepo) > 0) {
+#     lastEntry <- max(isInRepo$createdDate)
+#     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
+#       lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
+#       lazyLoad2(md5Hashes=lazyLs(paste0("cacheId:",outputHash), 
+#                               archivistCol="artifact", lazyDir=lazyDir), 
+#                        lazyDir = lazyDir, envir=environment())
+#       return(output) # all cached objects are called output
+#     }
+#   }
+#   output <- do.call(FUN, list(...))
+#   attr(output, "tags") <- paste0("cacheId:", outputHash)
+#   attr(output, "call") <- ""
+#   lazySave(output, lazyDir=lazyDir, 
+#            tags=paste0("cacheId:", outputHash),
+#            overwrite=TRUE)
+# #   saveToRepo(output, repoDir = cacheRepo, archiveData = TRUE, 
+# #              archiveMiniature = FALSE, rememberName = FALSE, silent = TRUE)
+#   output
+# }

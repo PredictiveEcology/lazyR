@@ -5,7 +5,8 @@
 \alias{lazyLoad2}
 \title{Load lazy objects from a \code{lazyR} database}
 \usage{
-lazyLoad2(objNames = NULL, lazyDir = NULL, envir = parent.frame())
+lazyLoad2(objNames = NULL, md5Hashes = NULL, lazyDir = NULL,
+  envir = parent.frame())
 }
 \arguments{
 \item{objNames}{A character vector of object names to load lazily, usually from a lazyLs call.
