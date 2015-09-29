@@ -262,13 +262,13 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 
   # check that lazyDir is specified, if not, use getLazyDir, if still nothing, then use temp
   lazyDir <- checkLazyDir(lazyDir)
-
   b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
     filter(grepl(pattern=tagType, tag)) %>%
     distinct_("artifact", "tag") #%>%
     #select_("artifact", archivistCol)
 
   if (!is.null(tag)) {
+
     tag2 <- tag # creates confusion in dplyr because tag is a column name in
                 # showLocalRepo and an argument in this function
     if (exact) {
@@ -281,8 +281,19 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
         select_("artifact")
     }
 
-    b <- left_join(a, b, by="artifact") %>% distinct_
+    b <- left_join(a, b, by="artifact") %>%
+      distinct_
   }
+  if (tagTypeAll) {
+    out <- b
+  } else {
+    a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+      filter(grepl(paste0(tag2), tag)) %>%
+      select_("artifact")
+  }
+
+  b <- left_join(a, b, by="artifact") %>% distinct_
+  
   if (tagTypeAll) {
     out <- b
   } else {
@@ -327,7 +338,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' any(ls()=="obj") # Is TRUE
 #' unlink(tmpdir, recursive = TRUE)
 lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.frame()) {
-
+  
   obsRead <- character(0)
   on.exit(expr = {
     message(length(obsRead), " objects loaded of ", length(objNames))
@@ -673,10 +684,10 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 }
 
 # The following is an attempt to rewrite the cache function to work
-#  with lazyR databases. It doesn't work at this point because we
-# can't do a lazy return of an
+#  with lazyR databases. It doesn't work at this point because we 
+# can't do a lazy return of an 
 # object. We can only do delayedAssign, which can't be used within a
-# return() call.  Therefore, we can't return the lazy object in an
+# return() call.  Therefore, we can't return the lazy object in an 
 # <- assignment call. Also, because all objects are given the default object
 # name via a substitute call in the saveToRepo function, every object has
 # the same name, i.e., output in the case below.
@@ -684,20 +695,20 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 # @importFrom lazyeval lazy_
 # @importFrom pryr %d-%
 # lazyCache <- function(lazyDir, FUN, ..., notOlderThan=NULL)
-# #function (cacheRepo = NULL, FUN, ..., notOlderThan = NULL)
+# #function (cacheRepo = NULL, FUN, ..., notOlderThan = NULL) 
 # {
 #   tmpl <- list(...)
 #   tmpl$.FUN <- FUN
 #   outputHash <- digest(tmpl)
 #   localTags <- showLocalRepo(lazyDir, "tags")
-#   isInRepo <- localTags[localTags$tag == paste0("cacheId:",
+#   isInRepo <- localTags[localTags$tag == paste0("cacheId:", 
 #                                                 outputHash), , drop = FALSE]
 #   if (nrow(isInRepo) > 0) {
 #     lastEntry <- max(isInRepo$createdDate)
 #     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
 #       lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
-#       lazyLoad2(md5Hashes=lazyLs(paste0("cacheId:",outputHash),
-#                               archivistCol="artifact", lazyDir=lazyDir),
+#       lazyLoad2(md5Hashes=lazyLs(paste0("cacheId:",outputHash), 
+#                               archivistCol="artifact", lazyDir=lazyDir), 
 #                        lazyDir = lazyDir, envir=environment())
 #       return(output) # all cached objects are called output
 #     }
@@ -705,10 +716,10 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #   output <- do.call(FUN, list(...))
 #   attr(output, "tags") <- paste0("cacheId:", outputHash)
 #   attr(output, "call") <- ""
-#   lazySave(output, lazyDir=lazyDir,
+#   lazySave(output, lazyDir=lazyDir, 
 #            tags=paste0("cacheId:", outputHash),
 #            overwrite=TRUE)
-# #   saveToRepo(output, repoDir = cacheRepo, archiveData = TRUE,
+# #   saveToRepo(output, repoDir = cacheRepo, archiveData = TRUE, 
 # #              archiveMiniature = FALSE, rememberName = FALSE, silent = TRUE)
 #   output
 # }
