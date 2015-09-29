@@ -333,7 +333,8 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
     message(length(obsRead), " objects loaded of ", length(objNames))
     if (length(obsRead)!=length(objNames)) {
       message("Failed on ", objNames[!(objNames %in% obsRead)][1])
-    }})
+    }
+  })
 
   lazyDir <- checkLazyDir(lazyDir = lazyDir, create=FALSE)
 #   if (exists(".lazyDir", envir = .lazyREnv)) {

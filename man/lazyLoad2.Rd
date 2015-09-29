@@ -12,6 +12,8 @@ lazyLoad2(objNames = NULL, md5Hashes = NULL, lazyDir = NULL,
 \item{objNames}{A character vector of object names to load lazily, usually from a lazyLs call.
                 If \code{NULL}, all object in lazyDir will be loaded.}
 
+\item{md5Hashes}{Object hash.}
+
 \item{lazyDir}{Character string of directory to be used for the lazy databases.}
 
 \item{envir}{Environment into which the objects are loaded. Default is \code{.GlobalEnv}.}
