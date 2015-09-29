@@ -260,48 +260,46 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
     tagTypeAll <- FALSE
   }
 
-  # check that lzyDir is specified, if not, use getLazyDir, if still nothing, then use temp
+  # check that lazyDir is specified, if not, use getLazyDir, if still nothing, then use temp
   lazyDir <- checkLazyDir(lazyDir)
-#   if (is.null(lazyDir)) {
-#     lazyDir= getLazyDir()
-#     if (is.null(lazyDir)) {
-#       lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
-#     }
-#   }
-#
-#   if (!dir.exists(lazyDir)) {
-#     stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
-#                 "or with setLazyDir()."))
-#   }
+  b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+    filter(grepl(pattern=tagType, tag)) %>%
+    distinct_("artifact", "tag") #%>%
+    #select_("artifact", archivistCol)
 
-    b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-      filter(grepl(pattern=tagType, tag)) %>%
-      distinct_("artifact", "tag") #%>%
-      #select_("artifact", archivistCol)
+  if (!is.null(tag)) {
 
-    if (!is.null(tag)) {
-
-      tag2 <- tag # creates confusion in dplyr because tag is a column name in
-                  # showLocalRepo and an argument in this function
-      if (exact) {
-        a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-          filter(grepl(paste0("^",tagType,tag2,"$"), tag)) %>%
-          select_("artifact")
-      } else {
-        a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-          filter(grepl(paste0(tag2), tag)) %>%
-          select_("artifact")
-      }
-
-      b <- left_join(a, b, by="artifact") %>%
-        distinct_
-    }
-    if (tagTypeAll) {
-      out <- b
+    tag2 <- tag # creates confusion in dplyr because tag is a column name in
+                # showLocalRepo and an argument in this function
+    if (exact) {
+      a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+        filter(grepl(paste0("^",tagType,tag2,"$"), tag)) %>%
+        select_("artifact")
     } else {
-      out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "") %>% sort
+      a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+        filter(grepl(paste0(tag2), tag)) %>%
+        select_("artifact")
     }
-    return(out)
+
+    b <- left_join(a, b, by="artifact") %>%
+      distinct_
+  }
+  if (tagTypeAll) {
+    out <- b
+  } else {
+    a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+      filter(grepl(paste0(tag2), tag)) %>%
+      select_("artifact")
+  }
+
+  b <- left_join(a, b, by="artifact") %>% distinct_
+  
+  if (tagTypeAll) {
+    out <- b
+  } else {
+    out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "") %>% sort
+  }
+  return(out)
 }
 
 #' Load lazy objects from a \code{lazyR} database
@@ -310,6 +308,8 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #'
 #' @param objNames A character vector of object names to load lazily, usually from a lazyLs call.
 #'                 If \code{NULL}, all object in lazyDir will be loaded.
+#'
+#' @param md5Hashes Object hash.
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
 #'
