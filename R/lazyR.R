@@ -176,7 +176,8 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
                                 paste0("class:", is(obj))))
         }
 
-        md5Hash <- lazyLs(tag=objName, archivistCol = "artifact", lazyDir = lazyDir, exact = TRUE)
+        md5Hash <- lazyLs(tag=objName, archivistCol = "artifact", 
+                          lazyDir = lazyDir, exact = TRUE)
 
         # Add tags by class
         if (is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
@@ -262,7 +263,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 
   # check that lazyDir is specified, if not, use getLazyDir, if still nothing, then use temp
   lazyDir <- checkLazyDir(lazyDir)
-  b <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+  firstRepoLs <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
     filter(grepl(pattern=tagType, tag)) %>%
     distinct_("artifact", "tag") #%>%
     #select_("artifact", archivistCol)
@@ -270,34 +271,27 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
   if (!is.null(tag)) {
 
     tag2 <- tag # creates confusion in dplyr because tag is a column name in
-                # showLocalRepo and an argument in this function
+    # showLocalRepo and an argument in this function
     if (exact) {
-      a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+      secondRepoLs <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
         filter(grepl(paste0("^",tagType,tag2,"$"), tag)) %>%
         select_("artifact")
     } else {
-      a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
+      secondRepoLs <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
         filter(grepl(paste0(tag2), tag)) %>%
         select_("artifact")
     }
 
-    b <- left_join(a, b, by="artifact") %>%
+    firstRepoLs <- left_join(secondRepoLs, firstRepoLs, by="artifact") %>%
       distinct_
-  }
-  if (tagTypeAll) {
-    out <- b
-  } else {
-    a <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
-      filter(grepl(paste0(tag2), tag)) %>%
-      select_("artifact")
-  }
 
-  b <- left_join(a, b, by="artifact") %>% distinct_
+  }
   
   if (tagTypeAll) {
-    out <- b
+    out <- firstRepoLs
   } else {
-    out <- gsub(x = b[, archivistCol], pattern = tagType, replacement = "") %>% sort
+    out <- gsub(x = firstRepoLs[, archivistCol], pattern = tagType, replacement = "") %>% 
+      sort
   }
   return(out)
 }
@@ -516,6 +510,7 @@ setLazyDir <- function(lazyDir, create=FALSE) {
     dir.create(lazyDir)
   }
   lazyDir <- normalizePath(lazyDir, winslash = "/")
+  
   assign(".lazyDir", lazyDir, envir = .lazyREnv)
 
   # Must set the archivist location too, for internal archivist functions:
