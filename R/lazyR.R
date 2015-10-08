@@ -266,7 +266,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
   firstRepoLs <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
     filter(grepl(pattern=tagType, tag)) %>%
     distinct_("artifact", "tag") #%>%
-    #select_("artifact", archivistCol)
+    #select_("artifact", archivistCol) 
 
   if (!is.null(tag)) {
     tag2 <- tag # creates confusion in dplyr because tag is a column name in
