@@ -517,7 +517,8 @@ setLazyDir <- function(lazyDir, create=FALSE) {
   # Must set the archivist location too, for internal archivist functions:
   setLocalRepo(lazyDir)
 
-  return(paste("Local lazyR database set to", lazyDir))
+  message(paste("Local lazyR database set to", lazyDir))
+  return(invisible(lazyDir))
 }
 
 #' @rdname lazyDir
@@ -718,3 +719,49 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 # #              archiveMiniature = FALSE, rememberName = FALSE, silent = TRUE)
 #   output
 # }
+
+
+#' Copy a lazyDir and all the files in it
+#'
+#' @param oldLazyDir The source lazyDir
+#'
+#' @param newLazyDir The new lazyDir
+#'
+#' @return overwrite Passed to \code{lazySave}
+#' 
+#' @return copyRasterFile Passed to \code{lazySave}
+#' 
+#' @return clearRepo Passed to \code{lazySave}
+#'
+#' @docType methods
+#' @author Eliot McIntire
+#' @rdname copyLazyDir
+#' @importFrom archivist createEmptyRepo
+#' @export
+#' @examples
+#' \dontrun{
+#' obj1 <- 1:10
+#' obj2 <- 11:20
+#' setLazyDir
+#' oldLazyDir <- file.path(tempdir(), "old")
+#' newLazyDir <- file.path(tempdir(), "new")
+#' lazySave(obj1, obj2, lazyDir=oldLazyDir)
+#' copyLazyDir(oldLazyDir, newLazyDir)
+#' }
+copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE, 
+                        copyRasterFile=TRUE, clearRepo=TRUE) {
+  browser()
+  oldLazyDir <- checkLazyDir(oldLazyDir)
+  newLazyDir <- checkLazyDir(newLazyDir)
+  
+  lazyLoad2(lazyDir=oldLazyDir)
+  if(clearRepo) createEmptyRepo(repoDir = newLazyDir)
+  for(obj in lazyLs(lazyDir=oldLazyDir)) {
+    lazySave(mget(obj), 
+             lazyDir=newLazyDir,
+             overwrite=overwrite,
+             copyRasterFile=copyRasterFile,
+             clearRepo=FALSE)
+  }
+}
+
