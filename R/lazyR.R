@@ -138,7 +138,7 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
             curFilename <- normalizePath(filename(obj), winslash = "/")
             checkPath(file.path(lazyDir, "rasters"), create=TRUE)
 
-            saveFilename <- file.path(getLazyDir(), "rasters", basename(curFilename)) %>%
+            saveFilename <- file.path(lazyDir, "rasters", basename(curFilename)) %>%
               normalizePath(., winslash = "/", mustWork=FALSE)
 
             if (saveFilename!=curFilename) {
@@ -750,7 +750,6 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' }
 copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE, 
                         copyRasterFile=TRUE, clearRepo=TRUE) {
-  browser()
   oldLazyDir <- checkLazyDir(oldLazyDir)
   newLazyDir <- checkLazyDir(newLazyDir)
   
