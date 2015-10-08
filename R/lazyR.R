@@ -749,12 +749,14 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' copyLazyDir(oldLazyDir, newLazyDir)
 #' }
 copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE, 
-                        copyRasterFile=TRUE, clearRepo=TRUE) {
+                        copyRasterFile=TRUE, clearRepo=TRUE, create=TRUE) {
   oldLazyDir <- checkLazyDir(oldLazyDir)
-  newLazyDir <- checkLazyDir(newLazyDir)
+  newLazyDir <- checkLazyDir(newLazyDir, create=create)
   
   lazyLoad2(lazyDir=oldLazyDir)
+  
   if(clearRepo) createEmptyRepo(repoDir = newLazyDir)
+
   for(obj in lazyLs(lazyDir=oldLazyDir)) {
     lazySave(mget(obj), 
              lazyDir=newLazyDir,

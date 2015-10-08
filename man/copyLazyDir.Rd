@@ -6,7 +6,7 @@
 \title{Copy a lazyDir and all the files in it}
 \usage{
 copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, overwrite = TRUE,
-  copyRasterFile = TRUE, clearRepo = TRUE)
+  copyRasterFile = TRUE, clearRepo = TRUE, create = TRUE)
 }
 \arguments{
 \item{oldLazyDir}{The source lazyDir}
@@ -14,7 +14,11 @@ copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, overwrite = TRUE,
 \item{newLazyDir}{The new lazyDir}
 }
 \value{
-... Arguments passed to \code{lazySave}
+overwrite Passed to \code{lazySave}
+
+copyRasterFile Passed to \code{lazySave}
+
+clearRepo Passed to \code{lazySave}
 }
 \description{
 Copy a lazyDir and all the files in it
