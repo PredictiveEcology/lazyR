@@ -317,6 +317,7 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' @author Eliot McIntire
 #' @export
 #' @importFrom archivist showLocalRepo
+#' @importFrom raster raster
 #' @importFrom magrittr %>%
 #' @examples
 #' library(SpaDES)
@@ -506,7 +507,7 @@ setLazyDir <- function(lazyDir, create=FALSE) {
 #     }
 #   }
   stopifnot(is.character(lazyDir))
-  if (!file.exists(lazyDir)) {
+  if (!dir.exists(lazyDir)) {
     dir.create(lazyDir)
   }
   lazyDir <- normalizePath(lazyDir, winslash = "/")
