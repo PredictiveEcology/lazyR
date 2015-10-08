@@ -727,12 +727,16 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #'
 #' @param newLazyDir The new lazyDir
 #'
-#' @return overwrite Passed to \code{lazySave}
+#' @param overwrite Passed to \code{lazySave}
 #' 
-#' @return copyRasterFile Passed to \code{lazySave}
+#' @param copyRasterFile Passed to \code{lazySave}
 #' 
-#' @return clearRepo Passed to \code{lazySave}
-#'
+#' @param clearRepo Passed to \code{lazySave}
+#' 
+#' @param create Passed to \code{checkLazyDir}
+#' 
+#' @param silent Should a progress be printed
+#' 
 #' @docType methods
 #' @author Eliot McIntire
 #' @rdname copyLazyDir
@@ -749,20 +753,24 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' copyLazyDir(oldLazyDir, newLazyDir)
 #' }
 copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE, 
-                        copyRasterFile=TRUE, clearRepo=TRUE, create=TRUE) {
+                        copyRasterFile=TRUE, clearRepo=TRUE, 
+                        create=TRUE, silent=FALSE) {
   oldLazyDir <- checkLazyDir(oldLazyDir)
   newLazyDir <- checkLazyDir(newLazyDir, create=create)
   
-  lazyLoad2(lazyDir=oldLazyDir)
+  objsLoaded <- lazyLoad2(lazyDir=oldLazyDir)
   
   if(clearRepo) createEmptyRepo(repoDir = newLazyDir)
 
+  counter=0
   for(obj in lazyLs(lazyDir=oldLazyDir)) {
+    counter=counter+1
     lazySave(mget(obj), 
              lazyDir=newLazyDir,
              overwrite=overwrite,
              copyRasterFile=copyRasterFile,
              clearRepo=FALSE)
+    if(counter %% 10 == 0) message("Copied ", counter, " of ", length(objsLoaded))
   }
 }
 

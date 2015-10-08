@@ -6,19 +6,23 @@
 \title{Copy a lazyDir and all the files in it}
 \usage{
 copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, overwrite = TRUE,
-  copyRasterFile = TRUE, clearRepo = TRUE, create = TRUE)
+  copyRasterFile = TRUE, clearRepo = TRUE, create = TRUE,
+  silent = FALSE)
 }
 \arguments{
 \item{oldLazyDir}{The source lazyDir}
 
 \item{newLazyDir}{The new lazyDir}
-}
-\value{
-overwrite Passed to \code{lazySave}
 
-copyRasterFile Passed to \code{lazySave}
+\item{overwrite}{Passed to \code{lazySave}}
 
-clearRepo Passed to \code{lazySave}
+\item{copyRasterFile}{Passed to \code{lazySave}}
+
+\item{clearRepo}{Passed to \code{lazySave}}
+
+\item{create}{Passed to \code{checkLazyDir}}
+
+\item{silent}{Should a progress be printed}
 }
 \description{
 Copy a lazyDir and all the files in it
