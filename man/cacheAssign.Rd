@@ -3,7 +3,7 @@
 \docType{methods}
 \name{\%<\%}
 \alias{\%<\%}
-\title{Cache assignment operator}
+\title{Lazy cache assignment operator}
 \usage{
 x \%<\% y
 }
@@ -18,12 +18,10 @@ x \%<\% y
 
 \item{substituteEnv}{The environment to be passed to substitute internally. This may help with
 programming control.}
-
-\item{forceEval}{Do not use cached copy; reevaluate and put new value into lazyLoad database}
 }
 \value{
-A logical vector indicating the result of the element by element comparison.
-        The elements of shorter vectors are recycled as necessary.
+Evaluation or lazy load of the right hand side (y),
+assigned to the objectName (x) on the left hand side.
 }
 \description{
 This is very experimental. Alternative assignment operator to \code{<-}
@@ -43,6 +41,9 @@ Known features: caching is based on both the left side (the object name assigned
 and the the right hand side operator (the call itself). This may or may not be the best behaviour
 and will be revisited with usage.
 
+Known limitations: currently, the right hand side must be a simple function call, and can't include
+a magrittr pipe operator.
+
 If writing and reading from disk the outputs and inputs, respectively, takes longer than
 evaluating the expression, then there is no point in caching.
 
@@ -52,7 +53,20 @@ behaviour. It will always return the same result from a \code{output} %<% \code{
 }
 \note{
 Because this works as an assignment operator, any arguments other than the x and y
-are not changeable unless it is used as a function call via `%:%`(x, y, notOlderThan, etc.)
+are not changeable unless it is used as a function call using back ticks \code{`\%<\%`(x, y, notOlderThan = now())}
+}
+\examples{
+setLazyDir(tempdir(), create=TRUE)
+# First time will evaluate it, create a hash, save to lazy database, return result. Will be slow
+system.time(a\%<\%seq(1,1e6))
+
+# Second time will return the value in the lazy load database because arguments are identical
+system.time(a\%<\%seq(1,1e6))
+
+# For comparison, normal assignment may be faster if it is a fast function in R
+system.time(a<-seq(1,1e6))
+
+lazyRm("a")
 }
 \author{
 Eliot McIntire

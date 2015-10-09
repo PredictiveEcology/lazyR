@@ -681,17 +681,38 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
     }
   }
 
-  if (!dir.exists(lazyDir)) {
-    if (create) {
-      dir.create(lazyDir)
-      createEmptyRepo(lazyDir)
-    } else {
+  if (create) {
+    if (!dir.exists(lazyDir)) {
+        dir.create(lazyDir, showWarnings = FALSE)
+        createNewRepo = TRUE
+      } else {
+        if(file.exists(file.path(lazyDir,"backpack.db"))) {
+          if(file.info(file.path(lazyDir,"backpack.db"))$size == 0) {
+            createNewRepo = TRUE
+          } else {
+            createNewRepo = FALSE
+          }
+        } else {
+          createNewRepo = TRUE
+        }
+      }
+#      createNewRepo = TRUE
+      if(createNewRepo) {
+        createEmptyRepo(lazyDir)
+      } 
+  } else { # if create is false
+    if (!dir.exists(lazyDir)) {
       stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
-                "or with setLazyDir()."))
-    }
-  } else {
-    if(file.info(file.path(lazyDir,"backpack.db"))$size == 0)
-      createEmptyRepo(lazyDir)
+                  "or with setLazyDir()."))
+    } else {
+      if(file.exists(file.path(lazyDir,"backpack.db"))) {
+        if(file.info(file.path(lazyDir,"backpack.db"))$size == 0)
+          createNewRepo = TRUE
+      } else {
+        stop(paste0("The lazyDir, ", lazyDir,", exists, but is not a lazy directory. Please create it with",
+            " create=TRUE"))
+      }
+    }   
   }
   return(lazyDir)
 }
@@ -807,7 +828,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 }
 
 ################################################################################
-#' Cache assignment operator
+#' Lazy cache assignment operator
 #' 
 #' This is very experimental. Alternative assignment operator to \code{<-}
 #' 
@@ -824,6 +845,9 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' Known features: caching is based on both the left side (the object name assigned to) 
 #' and the the right hand side operator (the call itself). This may or may not be the best behaviour
 #' and will be revisited with usage.
+#' 
+#' Known limitations: currently, the right hand side must be a simple function call, and can't include
+#' a magrittr pipe operator.
 #' 
 #' If writing and reading from disk the outputs and inputs, respectively, takes longer than 
 #' evaluating the expression, then there is no point in caching. 
@@ -843,13 +867,11 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' @param substituteEnv The environment to be passed to substitute internally. This may help with 
 #' programming control.
 #' 
-#' @param forceEval Do not use cached copy; reevaluate and put new value into lazyLoad database
-#' 
 #' @note Because this works as an assignment operator, any arguments other than the x and y 
-#' are not changeable unless it is used as a function call via `%:%`(x, y, notOlderThan, etc.)
+#' are not changeable unless it is used as a function call using back ticks \code{`\%<\%`(x, y, notOlderThan = now())}
 #' 
-#' @return A logical vector indicating the result of the element by element comparison.
-#'         The elements of shorter vectors are recycled as necessary.
+#' @return Evaluation or lazy load of the right hand side (y), 
+#' assigned to the objectName (x) on the left hand side.
 #'
 #' @export
 #' @docType methods
@@ -858,9 +880,20 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' @importFrom magrittr %>%
 #'
 #' @author Eliot McIntire
+#' @examples
+#' setLazyDir(tempdir(), create=TRUE)
+#' # First time will evaluate it, create a hash, save to lazy database, return result. Will be slow
+#' system.time(a%<%seq(1,1e6))
+#' 
+#' # Second time will return the value in the lazy load database because arguments are identical
+#' system.time(a%<%seq(1,1e6))
+#' 
+#' # For comparison, normal assignment may be faster if it is a fast function in R
+#' system.time(a<-seq(1,1e6))
+#' 
+#' lazyRm("a")
 #'
-`%<%` <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=environment(),
-                  forceEval=FALSE) {
+`%<%` <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=environment()) {
 
   lazyDir <- checkLazyDir(lazyDir = lazyDir)
   funCall <- sapply(match.call() %>% as.list,
@@ -875,17 +908,15 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
   isInRepo <- localTags[localTags$tag == paste0("cacheId:", 
                                               digestCall), , drop = FALSE]
 
-  if(!forceEval) {
-    if (nrow(isInRepo) > 0) {
-      lastEntry <- max(isInRepo$createdDate)
-      if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
-        lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
-        if(exists(name, envir=parent.frame())) rm(list = name, envir=parent.frame())
-        lazyLoad2(lazyLs(digestCall), envir = environment())
-        delayedAssign(x = name, value = get(lazyLs(digestCall), env=environment()), 
-                      eval.env = environment(), assign.env = parent.frame())
-        return(invisible())
-      }
+  if (nrow(isInRepo) > 0) {
+    lastEntry <- max(isInRepo$createdDate)
+    if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
+      lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
+      if(exists(name, envir=parent.frame())) rm(list = name, envir=parent.frame())
+      lazyLoad2(lazyLs(digestCall), envir = environment())
+      delayedAssign(x = name, value = get(lazyLs(digestCall), env=environment()), 
+                    eval.env = environment(), assign.env = parent.frame())
+      return(invisible())
     }
   }
   
