@@ -5,12 +5,14 @@
 \alias{lazySave}
 \title{Save objects to a \code{lazyR} database}
 \usage{
-lazySave(..., lazyDir = NULL, tags = NULL, clearRepo = FALSE,
-  overwrite = FALSE, copyRasterFile = TRUE,
+lazySave(..., objNames = NULL, lazyDir = NULL, tags = NULL,
+  clearRepo = FALSE, overwrite = FALSE, copyRasterFile = TRUE,
   compareRasterFileLength = 1e+06)
 }
 \arguments{
 \item{...}{Objects to save to an R lazy database, with metadata saved via archivist package repository.}
+
+\item{objNames}{Optional vector of names of same length as ... to override the object names.}
 
 \item{lazyDir}{Character string of directory to be used for the lazy databases.
 This creates an archivist repository.}

@@ -31,6 +31,8 @@ if (getRversion() >= "3.1.0") {
 #'
 #' @param ... Objects to save to an R lazy database, with metadata saved via archivist package repository.
 #'
+#' @param objNames Optional vector of names of same length as ... to override the object names.
+#' 
 #' @param lazyDir Character string of directory to be used for the lazy databases.
 #' This creates an archivist repository.
 #'
@@ -67,11 +69,24 @@ if (getRversion() >= "3.1.0") {
 #' lazySave(mget(ls(envir=.GlobalEnv)))
 #' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 #' }
-lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
+lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALSE,
                      overwrite=FALSE, copyRasterFile=TRUE,
                      compareRasterFileLength=1e6) {
+  
   objList <- list(...)
-  objNames <- NULL
+
+  if (is(objList[[1]], "list")) {
+    objList <- objList[[1]]
+  }
+  
+  if(!is.null(objNames)) {
+    if(length(objNames) != length(objList)) {
+      stop("objNames must be same length as objList")
+    }
+    names(objList) <- objNames
+    
+  }
+  #objNames <- NULL
 
 
 #   if(is.null(lazyDir)) {
@@ -79,9 +94,6 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 #     message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
 #   }
 
-  if (is(objList[[1]], "list")) {
-    objList <- objList[[1]]
-  }
   if (!is.null(names(objList))) {
     if (length(names(objList)) == length(objList)) {
       objNames <- names(objList)
@@ -185,7 +197,7 @@ lazySave <- function(..., lazyDir=NULL, tags=NULL, clearRepo=FALSE,
 
       # Save the actual objects as lazy load databases
         list2env(x = objList[N]) %>%
-          tools:::makeLazyLoadDB(., file.path(lazyDir,"gallery", md5Hash))
+          getFromNamespace("makeLazyLoadDB","tools")(., file.path(lazyDir,"gallery", md5Hash))
       }
     })
   }
@@ -647,6 +659,7 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL) {
 #' @docType methods
 #' @author Eliot McIntire
 #' @rdname checkLazyDir
+#' @importFrom archivist createEmptyRepo
 #' @export
 #' @examples
 #' \dontrun{
@@ -671,10 +684,14 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
   if (!dir.exists(lazyDir)) {
     if (create) {
       dir.create(lazyDir)
+      createEmptyRepo(lazyDir)
     } else {
       stop(paste0("The lazyDir, ", lazyDir,", does not exist. Please specify it with lazyDir arg ",
                 "or with setLazyDir()."))
     }
+  } else {
+    if(file.info(file.path(lazyDir,"backpack.db"))$size == 0)
+      createEmptyRepo(lazyDir)
   }
   return(lazyDir)
 }
@@ -722,6 +739,21 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 
 
 #' Copy a lazyDir and all the files in it
+#' 
+#' This will copy an entire lazyDir to a new location. This can be useful
+#' for copying everything to a new computer, a network location etc.
+#' 
+#' @note This function is essential to use, instead of just using the operating 
+#' system copying directly, when \code{Raster*} objects are involved.
+#' \code{Raster*} objects have a file location as a backbone for the R object.
+#' This must not only be copied to the new location, but also the filename referenced
+#' within the \code{Raster} object must be updated to the new location. 
+#' Because \code{Raster*} objects encode absolute paths, the original 
+#' file must be visible before copying to the new path. 
+#' 
+#' Because absolute paths are stored within R objects, like \code{Raster*}
+#' objects, a network location may create undesired breakages unless 
+#' all machines have the same mapping to that network location.
 #'
 #' @param oldLazyDir The source lazyDir
 #'
@@ -774,3 +806,91 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
   }
 }
 
+################################################################################
+#' Cache assignment operator
+#' 
+#' This is very experimental. Alternative assignment operator to \code{<-}
+#' 
+#' This does three things in this order: 
+#' 
+#' 1. Take a \code{digest::digest} of the right hand side function arguments
+#' 2. Similar to \code{cache} in archivist package, it compares this digest to the lazyDir 
+#' database. If it that exact digest exists already, then it will \code{lazyLoad2} 
+#' it from the lazyDir. There are 2 differences from the \code{cache} function. First, the
+#' object name that is the "assigment" recipient is included in the caching and it is saved
+#' to a lazy load database on disk.
+#' 3. Assigns in memory the result of the call (\code{y}) to \code{x} as in the normal <- operator.
+#' 
+#' Known features: caching is based on both the left side (the object name assigned to) 
+#' and the the right hand side operator (the call itself). This may or may not be the best behaviour
+#' and will be revisited with usage.
+#' 
+#' If writing and reading from disk the outputs and inputs, respectively, takes longer than 
+#' evaluating the expression, then there is no point in caching. 
+#' 
+#' Likewise, if the function returns a result that is stochastic (i.e., will be different each time
+#' the function is called, even with the same input arguments), caching may not give the desired
+#' behaviour. It will always return the same result from a \code{output} %<% \code{rnorm(1)}
+#' 
+#' @param x the left hand side objectName to assign to, analogous to \code{<-}.
+#' 
+#' @param y the right hand side. Anything that R understands, 
+#' 
+#' @param lazyDir the lazyDir to use 
+#' 
+#' @param notOlderThan see \code{\link[archivist]{cache}}
+#' 
+#' @param substituteEnv The environment to be passed to substitute internally. This may help with 
+#' programming control.
+#' 
+#' @param forceEval Do not use cached copy; reevaluate and put new value into lazyLoad database
+#' 
+#' @note Because this works as an assignment operator, any arguments other than the x and y 
+#' are not changeable unless it is used as a function call via `%:%`(x, y, notOlderThan, etc.)
+#' 
+#' @return A logical vector indicating the result of the element by element comparison.
+#'         The elements of shorter vectors are recycled as necessary.
+#'
+#' @export
+#' @docType methods
+#' @rdname cacheAssign
+#' @importFrom archivist cache 
+#' @importFrom magrittr %>%
+#'
+#' @author Eliot McIntire
+#'
+`%<%` <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=environment(),
+                  forceEval=FALSE) {
+
+  lazyDir <- checkLazyDir(lazyDir = lazyDir)
+  funCall <- sapply(match.call() %>% as.list,
+                    function(x) x)[2:3]
+
+  #digestCall <- digest(match.call()$y) # This would be for right hand side only
+  inputs <- parse(text=funCall$y)[-1]
+  digestCall <- digest(append(sapply(inputs, eval),funCall$x))
+  name <- deparse(substitute(x, env = substituteEnv))
+  
+  localTags <- showLocalRepo(lazyDir, "tags")
+  isInRepo <- localTags[localTags$tag == paste0("cacheId:", 
+                                              digestCall), , drop = FALSE]
+
+  if(!forceEval) {
+    if (nrow(isInRepo) > 0) {
+      lastEntry <- max(isInRepo$createdDate)
+      if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
+        lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
+        if(exists(name, envir=parent.frame())) rm(list = name, envir=parent.frame())
+        lazyLoad2(lazyLs(digestCall), envir = environment())
+        delayedAssign(x = name, value = get(lazyLs(digestCall), env=environment()), 
+                      eval.env = environment(), assign.env = parent.frame())
+        return(invisible())
+      }
+    }
+  }
+  
+  output <- eval(y)
+  lazySave(output, lazyDir=lazyDir, objNames = name, tags=paste0("cacheId:", digestCall),
+           overwrite=TRUE)
+  delayedAssign(x = name, value = y, eval.env = environment(), assign.env = parent.frame())
+}

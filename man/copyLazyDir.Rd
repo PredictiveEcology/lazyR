@@ -25,7 +25,21 @@ copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, overwrite = TRUE,
 \item{silent}{Should a progress be printed}
 }
 \description{
-Copy a lazyDir and all the files in it
+This will copy an entire lazyDir to a new location. This can be useful
+for copying everything to a new computer, a network location etc.
+}
+\note{
+This function is essential to use, instead of just using the operating
+system copying directly, when \code{Raster*} objects are involved.
+\code{Raster*} objects have a file location as a backbone for the R object.
+This must not only be copied to the new location, but also the filename referenced
+within the \code{Raster} object must be updated to the new location.
+Because \code{Raster*} objects encode absolute paths, the original
+file must be visible before copying to the new path.
+
+Because absolute paths are stored within R objects, like \code{Raster*}
+objects, a network location may create undesired breakages unless
+all machines have the same mapping to that network location.
 }
 \examples{
 \dontrun{
