@@ -770,7 +770,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
              overwrite=overwrite,
              copyRasterFile=copyRasterFile,
              clearRepo=FALSE)
-    if(counter %% 10 == 0) message("Copied ", counter, " of ", length(objsLoaded))
+    if((counter %% 10 == 0) & silent!=TRUE) message("Copied ", counter, " of ", length(objsLoaded))
   }
 }
 
