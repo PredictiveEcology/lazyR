@@ -4,7 +4,7 @@
 \name{.lazyREnv}
 \alias{.lazyREnv}
 \title{The lazyREnv environment}
-\format{\preformatted{<environment: 0x000000002634fb58> 
+\format{\preformatted{<environment: 0xc1dc308> 
 }}
 \usage{
 .lazyREnv

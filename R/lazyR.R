@@ -60,6 +60,7 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom magrittr %>%
 #' @importFrom digest digest
 #' @importFrom SpaDES checkPath
+#' @importFrom utils getFromNamespace
 #' @examples
 #' a <- rnorm(10)
 #' b <- rnorm(20)
@@ -191,7 +192,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
                           lazyDir = lazyDir, exact = TRUE)
 
         # Add tags by class
-        if (is(obj, ".spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
+        if (is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
                                                   repoDir = lazyDir)
 
       # Save the actual objects as lazy load databases
@@ -868,7 +869,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' 
 #' @note Because this works as an assignment operator, any arguments other than the x and y 
 #' are not changeable unless it is used as a function call using back ticks 
-#' \code{`\%<\%`(x, y, notOlderThan = now())}
+#' \code{assignCache(x, y, notOlderThan = Sys.time())}
 #' 
 #' @return Evaluation or lazy load of the right hand side (y), 
 #' assigned to the objectName (x) on the left hand side.
@@ -876,12 +877,11 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' @export
 #' @docType methods
 #' @rdname cacheAssign
-#' @importFrom archivist cache 
+#' @aliases `%<%`
 #' @importFrom magrittr %>%
 #'
 #' @author Eliot McIntire
 #' @examples
-#' library(lubridate) # for now() below
 #' setLazyDir(tempdir(), create=TRUE)
 #' # First time will evaluate it, create a hash, save to lazy database, return result. Will be slow
 #' system.time(a%<%seq(1,1e6))
@@ -890,14 +890,13 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' system.time(a%<%seq(1,1e6))
 #' 
 #' # Third time - but force re-evaluation
-#' system.time(`%<%`(a, seq(1,1e6), notOlderThan = now()))
+#' system.time(assignCache(a, seq(1,1e6), notOlderThan = Sys.time()))
 #' 
 #' # For comparison, normal assignment may be faster if it is a fast function in R
 #' system.time(a<-seq(1,1e6))
 #' 
 #' lazyRm("a")
-#'
-`%<%` <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=environment()) {
+assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=environment()) {
 
   lazyDir <- checkLazyDir(lazyDir = lazyDir)
   funCall <- sapply(match.call() %>% as.list,
@@ -918,7 +917,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
       lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
       if(exists(name, envir=parent.frame())) rm(list = name, envir=parent.frame())
       lazyLoad2(lazyLs(digestCall), envir = environment())
-      delayedAssign(x = name, value = get(lazyLs(digestCall), env=environment()), 
+      delayedAssign(x = name, value = get(lazyLs(digestCall), envir=environment()), 
                     eval.env = environment(), assign.env = parent.frame())
       return(invisible())
     }
@@ -928,4 +927,11 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
   lazySave(output, lazyDir=lazyDir, objNames = name, tags=paste0("cacheId:", digestCall),
            overwrite=TRUE)
   delayedAssign(x = name, value = y, eval.env = environment(), assign.env = parent.frame())
+}
+
+
+#' @rdname cacheAssign
+#' @export
+`%<%` <- function(x, y) {
+  assignCache(x,y)
 }
