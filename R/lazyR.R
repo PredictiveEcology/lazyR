@@ -55,7 +55,6 @@ if (getRversion() >= "3.1.0") {
 #' @rdname lazySave
 #' @author Eliot McIntire
 #' @export
-#' @importClassesFrom SpaDES spatialObjects
 #' @importFrom raster crs inMemory filename
 #' @importFrom archivist deleteRepo createEmptyRepo saveToRepo addTagsRepo
 #' @importFrom magrittr %>%
@@ -192,7 +191,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
                           lazyDir = lazyDir, exact = TRUE)
 
         # Add tags by class
-        if (is(obj, "spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
+        if (is(obj, ".spatialObjects")) addTagsRepo(md5Hash, tags=paste0("crs:",crs(obj)),
                                                   repoDir = lazyDir)
 
       # Save the actual objects as lazy load databases
@@ -868,7 +867,8 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' programming control.
 #' 
 #' @note Because this works as an assignment operator, any arguments other than the x and y 
-#' are not changeable unless it is used as a function call using back ticks \code{`\%<\%`(x, y, notOlderThan = now())}
+#' are not changeable unless it is used as a function call using back ticks 
+#' \code{`\%<\%`(x, y, notOlderThan = now())}
 #' 
 #' @return Evaluation or lazy load of the right hand side (y), 
 #' assigned to the objectName (x) on the left hand side.
@@ -881,12 +881,16 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #'
 #' @author Eliot McIntire
 #' @examples
+#' library(lubridate) # for now() below
 #' setLazyDir(tempdir(), create=TRUE)
 #' # First time will evaluate it, create a hash, save to lazy database, return result. Will be slow
 #' system.time(a%<%seq(1,1e6))
 #' 
 #' # Second time will return the value in the lazy load database because arguments are identical
 #' system.time(a%<%seq(1,1e6))
+#' 
+#' # Third time - but force re-evaluation
+#' system.time(`%<%`(a, seq(1,1e6), notOlderThan = now()))
 #' 
 #' # For comparison, normal assignment may be faster if it is a fast function in R
 #' system.time(a<-seq(1,1e6))

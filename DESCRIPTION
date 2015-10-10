@@ -20,6 +20,10 @@ Imports:
     dplyr,
     magrittr,
     raster,
+    sp,
     SpaDES
 Collate:
+    'newClasses.R'
     'lazyR.R'
+    
+    
