@@ -858,7 +858,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
 #' 
 #' @param x the left hand side objectName to assign to, analogous to \code{<-}.
 #' 
-#' @param y the right hand side. Anything that R understands, 
+#' @param y the right hand side. Currently, only accepts simple function calls. 
 #' 
 #' @param lazyDir the lazyDir to use 
 #' 
