@@ -790,12 +790,11 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' @param oldLazyDir The source lazyDir
 #'
 #' @param newLazyDir The new lazyDir
+#' 
+#' @param useRobocopy For Windows, this will use a system call to Robocopy which appears to be much 
+#' faster than the internal \code{file.copy} function. Uses /MIR flag.
 #'
-#' @param overwrite Passed to \code{lazySave}
-#'
-#' @param copyRasterFile Passed to \code{lazySave}
-#'
-#' @param clearRepo Passed to \code{lazySave}
+#' @param overwrite Passed to \code{file.copy}
 #'
 #' @param create Passed to \code{checkLazyDir}
 #'
@@ -832,16 +831,34 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' lazyLoad2(lazyDir=newLazyDir)
 #' unlink(newLazyDir, recursive=TRUE)
 #' }
-copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
-                        copyRasterFile=TRUE, clearRepo=TRUE,
+copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE, 
+                        overwrite=TRUE,
+                        #copyRasterFile=TRUE, clearRepo=TRUE,
                         create=TRUE, silent=FALSE) {
 
   oldLazyDir <- checkLazyDir(oldLazyDir)
   newLazyDir <- checkLazyDir(newLazyDir, create=create)
   setwd(oldLazyDir)
-  
-  file.copy(from = dir(oldLazyDir), to = newLazyDir, 
-            overwrite = overwrite, recursive = TRUE)  
+
+  a=Sys.time()
+  os <- tolower(Sys.info()[["sysname"]])
+  if(os=="windows") {
+    if(useRobocopy) {
+      system(paste0("robocopy /MIR ", normalizePath(oldLazyDir, winslash = "\\"), 
+                  "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
+    } else {
+      file.copy(from = dir(oldLazyDir), to = newLazyDir, 
+                overwrite = overwrite, recursive=TRUE)  
+    }
+  } else if(os=="linux") {
+    stop("This next line must be checked. It is currently",
+         paste0("\ncp -R ", oldLazyDir, "/ ", newLazyDir, "/"))
+    system(paste0("cp -R ", oldLazyDir, "/ ", newLazyDir, "/"))
+  }
+#   file.copy(from = dir(oldLazyDir), to = newLazyDir, 
+#             overwrite = overwrite, recursive=TRUE)  
+  b=Sys.time()
+  return(b-a)
   
   # Rasters that are pointing to the wrong file will be corrected inside lazyLoad2, if the 
   #  file pointer is NOT the oldLazyDir. This is usually because of a drive changing letter
