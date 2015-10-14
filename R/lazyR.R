@@ -390,10 +390,17 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
         lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
       } else {
         rasterName <- gsub(rasterFile$tag, pattern="filename:", replacement = "")
+        #browser()
         if (file.exists(rasterName)) {
           assign(y, value=raster(rasterName), envir=envir)
         } else {
-          warning("Failed to load file ", rasterName, ".\n")
+          possibleNewRasterName <- file.path(lazyDir, "rasters", basename(rasterName))
+          if(file.exists(possibleNewRasterName)) {
+            warning("Original file backing ",y,", ", rasterName,", does not exist. Using ",possibleNewRasterName)
+            assign(y, value=raster(possibleNewRasterName), envir=envir)
+          } else {
+            warning("Failed to load file ", rasterName, ".\n")
+          }
         }
       }
       obsRead <<- c(obsRead,  y)
@@ -809,26 +816,26 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
   oldLazyDir <- checkLazyDir(oldLazyDir)
   newLazyDir <- checkLazyDir(newLazyDir, create=create)
 
-  objsLoaded <- lazyLoad2(lazyDir=oldLazyDir)
+  objsLoaded <- lazyLoad2(lazyDir=oldLazyDir, envir = environment())
 
   if (clearRepo) createEmptyRepo(repoDir = newLazyDir)
 
   counter <- 0
   oldObjs <- lazyLs(lazyDir=oldLazyDir)
   for(obj in oldObjs) {
+    browser(expr = lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster"))
     counter <- counter+1
     
-    # need special treatment
-    tmpObj <- mget(obj)
-    if(lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster")){
-      rasterFile <- slot(slot(tmpObj[[1]], "file"), "name")
-      if(nchar(rasterFile)>0) {
-        if(normalizePath(rasterFile  %>% dirname) != normalizePath(file.path(oldLazyDir, "rasters"))) {
-          slot(slot(tmpObj[[1]], "file"), "name") <- 
-            normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
-        }
-      }
-    } 
+    tmpObj <- mget(obj, envir = environment())
+#     if(lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster")){
+#       rasterFile <- slot(slot(tmpObj[[1]], "file"), "name")
+#       if(nchar(rasterFile)>0) {
+#         if(normalizePath(rasterFile  %>% dirname) != normalizePath(file.path(oldLazyDir, "rasters"))) {
+#           slot(slot(tmpObj[[1]], "file"), "name") <- 
+#             normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
+#         }
+#       }
+#     } 
     lazySave(tmpObj,
              lazyDir=newLazyDir,
              overwrite=overwrite,
