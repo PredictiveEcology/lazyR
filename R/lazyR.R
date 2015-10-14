@@ -400,7 +400,6 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
         lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
       } else {
         rasterName <- gsub(rasterFile$tag, pattern="filename:", replacement = "")
-        #browser()
         if (file.exists(rasterName)) {
           assign(y, value=raster(rasterName), envir=envir)
         } else {
@@ -711,7 +710,7 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
       }
   } else { # if create is false
     if (!dir.exists(lazyDir)) {
-      stop(paste0("The lazyDir, ", lazyDir,", does not exist.",
+      warning(paste0("The lazyDir, ", lazyDir,", does not exist.",
                   "Please specify the lazyDir argument or with setLazyDir()."))
     } else {
       if (file.exists(file.path(lazyDir,"backpack.db"))) {
@@ -823,42 +822,56 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
                         copyRasterFile=TRUE, clearRepo=TRUE,
                         create=TRUE, silent=FALSE) {
+
   oldLazyDir <- checkLazyDir(oldLazyDir)
   newLazyDir <- checkLazyDir(newLazyDir, create=create)
-
+  setwd(oldLazyDir)
+  
+  file.copy(from = dir(oldLazyDir), to = newLazyDir, 
+            overwrite = overwrite, recursive = TRUE)  
+  
   # Rasters that are pointing to the wrong file will be corrected inside lazyLoad2, if the 
   #  file pointer is NOT the oldLazyDir. This is usually because of a drive changing letter
   #  or switching between OSs
-  objsLoaded <- lazyLoad2(lazyDir=oldLazyDir, envir = environment())
-
-  if (clearRepo) createEmptyRepo(repoDir = newLazyDir)
-
-  counter <- 0
-  oldObjs <- lazyLs(lazyDir=oldLazyDir)
-  for(obj in oldObjs) {
-    counter <- counter+1
-    
-    tmpObj <- mget(obj, envir = environment())
-#     if(lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster")){
-#       rasterFile <- slot(slot(tmpObj[[1]], "file"), "name")
-#       if(nchar(rasterFile)>0) {
-#         if(normalizePath(rasterFile  %>% dirname) != normalizePath(file.path(oldLazyDir, "rasters"))) {
-#           slot(slot(tmpObj[[1]], "file"), "name") <- 
-#             normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
-#         }
-#       }
-#     } 
-    lazySave(tmpObj,
-             lazyDir=newLazyDir,
-             overwrite=overwrite,
-             copyRasterFile=copyRasterFile,
-             clearRepo=FALSE)
-    
-
-    if ((counter %% 10 == 0) & silent!=TRUE) {
-      message("Copied ", counter, " of ", length(objsLoaded))
-    }
-  }
+  #oldObjs <- lazyLoad2(lazyDir=newLazyDir, envir = environment())
+  #isRaster <- sapply(lazyLs(lazyDir=newLazyDir), lazyIs, "Raster", lazyDir=newLazyDir)
+  #ras <- names(isRaster)[isRaster]
+  
+  #slot(slot(tmpObj[[1]], "file"), "name") <- 
+  #               normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
+  #browser()
+  # 
+#   if (clearRepo) createEmptyRepo(repoDir = newLazyDir)
+# 
+#   
+#   
+#   counter <- 0
+#   #oldObjs <- lazyLs(lazyDir=oldLazyDir)
+#   for(obj in oldObjs) {
+#     counter <- counter+1
+#     
+# #     if(lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster")){
+# #       tmpObj <- mget(obj, envir = environment())
+# #       rasterFile <- slot(slot(tmpObj[[1]], "file"), "name")
+# #       if(nchar(rasterFile)>0) {
+# #         if(normalizePath(rasterFile  %>% dirname) != normalizePath(file.path(oldLazyDir, "rasters"))) {
+# #           slot(slot(tmpObj[[1]], "file"), "name") <- 
+# #             normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
+# #         }
+# #       }
+# #        lazySave(tmpObj,
+# #                 lazyDir=newLazyDir,
+# #                 overwrite=overwrite,
+# #                 copyRasterFile=copyRasterFile,
+# #                 clearRepo=FALSE)
+# #      } else {
+# #      }
+#     
+# 
+#     if ((counter %% 10 == 0) & silent!=TRUE) {
+#       message("Copied ", counter, " of ", length(objsLoaded))
+#     }
+#   }
 }
 
 ################################################################################
