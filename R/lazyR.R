@@ -816,6 +816,9 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
   oldLazyDir <- checkLazyDir(oldLazyDir)
   newLazyDir <- checkLazyDir(newLazyDir, create=create)
 
+  # Rasters that are pointing to the wrong file will be corrected inside lazyLoad2, if the 
+  #  file pointer is NOT the oldLazyDir. This is usually because of a drive changing letter
+  #  or switching between OSs
   objsLoaded <- lazyLoad2(lazyDir=oldLazyDir, envir = environment())
 
   if (clearRepo) createEmptyRepo(repoDir = newLazyDir)
@@ -823,7 +826,6 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
   counter <- 0
   oldObjs <- lazyLs(lazyDir=oldLazyDir)
   for(obj in oldObjs) {
-    browser(expr = lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster"))
     counter <- counter+1
     
     tmpObj <- mget(obj, envir = environment())
