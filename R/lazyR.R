@@ -405,7 +405,9 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
         } else {
           possibleNewRasterName <- file.path(lazyDir, "rasters", basename(rasterName))
           if(file.exists(possibleNewRasterName)) {
-            warning("Original file backing ",y,", ", rasterName,", does not exist. Using ",possibleNewRasterName)
+            warning("\nThe file used by object ",y,", ", rasterName,", does not exist. \nChanging ",
+                    "it to ",possibleNewRasterName," locally. To update this in the lazyDir database, \nplease ",
+                    "use lazySave(",y,", overwrite=TRUE, lazyDir=\"",lazyDir,"\"), but this may be slow.")
             assign(y, value=raster(possibleNewRasterName), envir=envir)
           } else {
             warning("Failed to load file ", rasterName, ".\n")
