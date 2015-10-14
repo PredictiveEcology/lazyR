@@ -141,7 +141,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
                   "Use overwrite=TRUE to replace it."))
           shouldSave <- FALSE
         } else {
-          lazyRm(objName)
+          lazyRm(objName, lazyDir=lazyDir)
         }
       }
       if (shouldSave) {
@@ -792,11 +792,16 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' \dontrun{
 #' obj1 <- 1:10
 #' obj2 <- 11:20
-#' setLazyDir
+#' r <- raster::raster(matrix(1:9, ncol=3))
+#' raster::writeRaster(r, file.path(tempdir(),"r.tif"), overwrite=TRUE)
+#' rm(r)
+#' r <- raster::raster(file.path(tempdir(),"r.tif"))
 #' oldLazyDir <- file.path(tempdir(), "old")
 #' newLazyDir <- file.path(tempdir(), "new")
-#' lazySave(obj1, obj2, lazyDir=oldLazyDir)
+#' lazySave(obj1, obj2, r, lazyDir=oldLazyDir, overwrite=TRUE)
 #' copyLazyDir(oldLazyDir, newLazyDir)
+#' unlink(oldLazyDir, recursive=TRUE)
+#' unlink(newLazyDir, recursive=TRUE)
 #' }
 copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
                         copyRasterFile=TRUE, clearRepo=TRUE,
@@ -809,16 +814,28 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, overwrite=TRUE,
   if (clearRepo) createEmptyRepo(repoDir = newLazyDir)
 
   counter <- 0
-  for(obj in lazyLs(lazyDir=oldLazyDir)) {
+  oldObjs <- lazyLs(lazyDir=oldLazyDir)
+  for(obj in oldObjs) {
     counter <- counter+1
-    if (lazyIs(objName, "Raster", lazyDir = oldLazyDir)) {
-      slot(slot(objList[[N]], "file"), "name") <- saveFilename
-    }
-    lazySave(mget(obj),
+    
+    # need special treatment
+    tmpObj <- mget(obj)
+    if(lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster")){
+      rasterFile <- slot(slot(tmpObj[[1]], "file"), "name")
+      if(nchar(rasterFile)>0) {
+        if(normalizePath(rasterFile  %>% dirname) != normalizePath(file.path(oldLazyDir, "rasters"))) {
+          slot(slot(tmpObj[[1]], "file"), "name") <- 
+            normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
+        }
+      }
+    } 
+    lazySave(tmpObj,
              lazyDir=newLazyDir,
              overwrite=overwrite,
              copyRasterFile=copyRasterFile,
              clearRepo=FALSE)
+    
+
     if ((counter %% 10 == 0) & silent!=TRUE) {
       message("Copied ", counter, " of ", length(objsLoaded))
     }
