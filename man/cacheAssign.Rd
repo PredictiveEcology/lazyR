@@ -16,8 +16,8 @@ x \%<\% y
 
 \item{notOlderThan}{see \code{\link[archivist]{cache}}}
 
-\item{substituteEnv}{The environment to be passed to substitute internally. This may help with
-programming control.}
+\item{substituteEnv}{The environment to be passed to substitute internally.
+This may help with programming control.}
 }
 \value{
 Evaluation or lazy load of the right hand side (y),

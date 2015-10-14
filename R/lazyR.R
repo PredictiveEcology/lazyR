@@ -311,6 +311,16 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' Load lazy objects from a \code{lazyR} database
 #'
 #' Load all named objects into the specified environment.
+#' 
+#' @note Rasters have a special behaviour. If the filename associated with a raster is 
+#' pointing to a file that doesn't exist, then it will try the prepend the \code{lazyDir} to the
+#' filename inside the \code{Raster*} object. The raster filenames can become incorrect if
+#' the absolute path to the file changes due to a changing of operating system or moving 
+#' from a removable drive. For example, a removable drive, which was mapped to, say E: in the 
+#' computer where the object was originally \code{lazySave}d, gets replugged in but mapped to
+#' F:, then the absolute paths will be wrong. This will be automatically corrected, with a warning, 
+#' if the filename can be found by looking in the relative path \code{/rasters/} below 
+#' \code{lazyDir}.
 #'
 #' @param objNames A character vector of object names to load lazily, usually from a lazyLs call.
 #'                 If \code{NULL}, all object in lazyDir will be loaded.
