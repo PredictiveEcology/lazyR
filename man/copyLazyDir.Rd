@@ -5,20 +5,18 @@
 \alias{copyLazyDir}
 \title{Copy a lazyDir and all the files in it}
 \usage{
-copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, overwrite = TRUE,
-  copyRasterFile = TRUE, clearRepo = TRUE, create = TRUE,
-  silent = FALSE)
+copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, useRobocopy = TRUE,
+  overwrite = TRUE, create = TRUE, silent = FALSE)
 }
 \arguments{
 \item{oldLazyDir}{The source lazyDir}
 
 \item{newLazyDir}{The new lazyDir}
 
-\item{overwrite}{Passed to \code{lazySave}}
+\item{useRobocopy}{For Windows, this will use a system call to Robocopy which appears to be much
+faster than the internal \code{file.copy} function. Uses /MIR flag.}
 
-\item{copyRasterFile}{Passed to \code{lazySave}}
-
-\item{clearRepo}{Passed to \code{lazySave}}
+\item{overwrite}{Passed to \code{file.copy}}
 
 \item{create}{Passed to \code{checkLazyDir}}
 
@@ -43,13 +41,31 @@ all machines have the same mapping to that network location.
 }
 \examples{
 \dontrun{
+library(raster)
+library(rgdal)
+# make some objects
 obj1 <- 1:10
 obj2 <- 11:20
-setLazyDir
+r <- raster::raster(matrix(1:9, ncol=3))
+raster::writeRaster(r, file.path(tempdir(),"r.tif"), overwrite=TRUE)
+rm(r)
+r <- raster::raster(file.path(tempdir(),"r.tif"))
+
+# identify a new and old lazyLoad db
 oldLazyDir <- file.path(tempdir(), "old")
 newLazyDir <- file.path(tempdir(), "new")
-lazySave(obj1, obj2, lazyDir=oldLazyDir)
+lazySave(obj1, obj2, r, lazyDir=oldLazyDir, overwrite=TRUE)
+
+# copy to new lazyDir location
 copyLazyDir(oldLazyDir, newLazyDir)
+
+# remove the objects in memory and the old lazyLoad db
+rm(obj1, obj2, r)
+unlink(oldLazyDir, recursive=TRUE)
+
+lazyLoad2(lazyDir=newLazyDir) # Objects should be visible after this
+ls()
+unlink(newLazyDir, recursive=TRUE)
 }
 }
 \author{

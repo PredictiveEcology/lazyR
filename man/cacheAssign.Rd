@@ -21,8 +21,8 @@ x \%<\% y
 
 \item{notOlderThan}{see \code{\link[archivist]{cache}}}
 
-\item{substituteEnv}{The environment to be passed to substitute internally. This may help with
-programming control.}
+\item{substituteEnv}{The environment to be passed to substitute internally.
+This may help with programming control.}
 }
 \value{
 Evaluation or lazy load of the right hand side (y),
@@ -62,7 +62,7 @@ are not changeable unless it is used as a function call using back ticks
 \code{assignCache(x, y, notOlderThan = Sys.time())}
 }
 \examples{
-setLazyDir(tempdir(), create=TRUE)
+lazyDir(tempdir(), create=TRUE)
 # First time will evaluate it, create a hash, save to lazy database, return result. Will be slow
 system.time(a\%<\%seq(1,1e6))
 

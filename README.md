@@ -3,9 +3,11 @@
 An R package for stashing objects in lazy load databases, analogous to lazy loaded packages.
 This uses the `archivist` package for a lot of the back end, but replaces the storing of `.rda` objects in the database with `.rdx`/`.rdb` objects.
 
+## Using manual lazy saving
+
 The basic work flow is:
 
-1. decide on a folder for the database, and set it using `setLazyDir()`
+1. decide on a folder for the database, and set it using `lazyDir()`
 
 2. save objects to a lazyR database using `lazySave(obj)`
 
@@ -15,7 +17,21 @@ The basic work flow is:
 4. re-load objects via name or tag using `lazyLoad2(tag="maps")`
 5. remove objects via `lazyRm("objName")` or `lazyRm(lazyLs("tagname"))`
 
-Common things to use:
+## Using caching (automatic lazy saving)
+
+An alternative workflow is to use the `%<%` (`assignCache`) operator, which will automatically cache the object with its assigned object name. Caching, like with the archivist package, will first do a hash of the arguments in the function, compare with the hashed value of the objects in the database, and return the cached object, if the hash values are the same.
+
+Example:
+
+1. decide on a folder for the database, and set it using
+
+    lazyDir(tempdir(), create=TRUE)
+
+2. assign objects via `%<%`. See help(cacheAssign)
+
+    a %<% seq(1,10,1)
+
+## Common things to use:
 
 - `lazyLs()` will list all objects in the database
 - `lazyLs(tagType="all")` will list the full `archivist` `data.frame` with columns: `md5Hash`, `tag`, `dateCreated`.

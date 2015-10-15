@@ -25,7 +25,7 @@ A character vector equivalent to the an \code{is(objName)} command
 Get object class
 }
 \examples{
-setLazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
+lazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
 a <- rnorm(10)
 lazySave(a)
 lazyIs("a", "numeric")

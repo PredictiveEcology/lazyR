@@ -24,6 +24,17 @@ Invisibly, the objects read in returned. This function is used for its side effe
 \description{
 Load all named objects into the specified environment.
 }
+\note{
+Rasters have a special behaviour. If the filename associated with a raster is
+pointing to a file that doesn't exist, then it will try the prepend the \code{lazyDir} to the
+filename inside the \code{Raster*} object. The raster filenames can become incorrect if
+the absolute path to the file changes due to a changing of operating system or moving
+from a removable drive. For example, a removable drive, which was mapped to, say E: in the
+computer where the object was originally \code{lazySave}d, gets replugged in but mapped to
+F:, then the absolute paths will be wrong. This will be automatically corrected, with a warning,
+if the filename can be found by looking in the relative path \code{/rasters/} below
+\code{lazyDir}.
+}
 \examples{
 library(SpaDES)
 tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
