@@ -45,11 +45,16 @@ all machines have the same mapping to that network location.
 \dontrun{
 obj1 <- 1:10
 obj2 <- 11:20
-setLazyDir
+r <- raster::raster(matrix(1:9, ncol=3))
+raster::writeRaster(r, file.path(tempdir(),"r.tif"), overwrite=TRUE)
+rm(r)
+r <- raster::raster(file.path(tempdir(),"r.tif"))
 oldLazyDir <- file.path(tempdir(), "old")
 newLazyDir <- file.path(tempdir(), "new")
-lazySave(obj1, obj2, lazyDir=oldLazyDir)
+lazySave(obj1, obj2, r, lazyDir=oldLazyDir, overwrite=TRUE)
 copyLazyDir(oldLazyDir, newLazyDir)
+unlink(oldLazyDir, recursive=TRUE)
+unlink(newLazyDir, recursive=TRUE)
 }
 }
 \author{
