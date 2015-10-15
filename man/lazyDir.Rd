@@ -13,7 +13,7 @@
 
 .getLazyDir()
 
-lazyDir(lazyDir = NULL, create = FALSE)
+lazyDir(lazyDir = NA, create = FALSE)
 
 setLazyDir(lazyDir, create = TRUE)
 
@@ -21,7 +21,8 @@ getLazyDir(lazyDir, create = TRUE)
 }
 \arguments{
 \item{lazyDir}{Character string of directory to be used for the lazy databases.
-If \code{lazyDir=NULL}, then it removes the active lazy directory.}
+If \code{lazyDir=NULL}, then it removes the active lazy directory. If NA, the default,
+returns the currently set lazyDir.}
 
 \item{create}{Logical, passed to checkLazyDir, i.e., it will create dir if it doesn't exist.
 Default is FALSE.}
@@ -35,13 +36,21 @@ an argument, lazyDir, manually. \code{lazyDir()} is a shorthand for \code{lazyDi
 \code{lazyDir("someDir")} is a shorthand for \code{lazyDir("someDir")}
 }
 \examples{
-\dontrun{
+lazyDir() # Returns NULL if not set
+
+# Set new lazyDir
 lazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
+
+# Check new value
+lazyDir()
+
 a <- rnorm(10)
-lazySave(a)
-lazyRm("a")
-unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
-}
+lazySave(a) # add to lazyDir
+lazyRm("a") # remove object from lazyDir
+
+lazyDir(NULL) # removes currently set lazyDir
+lazyDir()  # confirm removal
+unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE) # remove folder and lazyDir
 }
 \author{
 Eliot McIntire

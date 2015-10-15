@@ -147,7 +147,6 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
       if (shouldSave) {
         if (is(obj, "Raster")) {
           if (copyRasterFile & !inMemory(obj)) {
-            browser()
             curFilename <- normalizePath(filename(obj), winslash = "/")
             checkPath(file.path(lazyDir, "rasters"), create=TRUE)
 
@@ -512,7 +511,8 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #' \code{lazyDir("someDir")} is a shorthand for \code{lazyDir("someDir")}
 #'
 #' @param lazyDir Character string of directory to be used for the lazy databases.
-#' If \code{lazyDir=NULL}, then it removes the active lazy directory.
+#' If \code{lazyDir=NULL}, then it removes the active lazy directory. If NA, the default, 
+#' returns the currently set lazyDir.
 #'
 #' @param create Logical, passed to checkLazyDir, i.e., it will create dir if it doesn't exist.
 #' Default is FALSE.
@@ -526,13 +526,21 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #' @author Eliot McIntire
 #' @rdname lazyDir
 #' @examples
-#' \dontrun{
+#' lazyDir() # Returns NULL if not set
+#' 
+#' # Set new lazyDir
 #' lazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
+#' 
+#' # Check new value
+#' lazyDir()
+#' 
 #' a <- rnorm(10)
-#' lazySave(a)
-#' lazyRm("a")
-#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
-#' }
+#' lazySave(a) # add to lazyDir
+#' lazyRm("a") # remove object from lazyDir
+#' 
+#' lazyDir(NULL) # removes currently set lazyDir
+#' lazyDir()  # confirm removal
+#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE) # remove folder and lazyDir
 .setLazyDir <- function(lazyDir, create=FALSE) {
   
   lazyDir <- checkLazyDir(lazyDir, create = create)
@@ -566,8 +574,16 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 
 #' @rdname lazyDir
 #' @export
-lazyDir <- function(lazyDir=NULL, create=FALSE) {
-  if(is.null(lazyDir))
+lazyDir <- function(lazyDir=NA, create=FALSE) {
+  
+  if(is.null(lazyDir)) {
+    if(exists(".lazyDir", envir = .lazyREnv)) {
+      rm(".lazyDir", envir = .lazyREnv)
+    }
+    return(NULL)
+  }
+
+  if(is.na(lazyDir))
     return(.getLazyDir())
   
   return(invisible(.setLazyDir(lazyDir, create=create)))
