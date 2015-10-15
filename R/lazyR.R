@@ -381,6 +381,8 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
     objNames <- unique(lazyLs(lazyDir = lazyDir))
   }
 
+  hadRasterWrongPath <- FALSE
+
   lapply(objNames, function(y) {
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       if(is.null(md5Hashes)) {
@@ -405,9 +407,10 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
         } else {
           possibleNewRasterName <- file.path(lazyDir, "rasters", basename(rasterName))
           if(file.exists(possibleNewRasterName)) {
-            warning("\nThe file used by object ",y,", ", rasterName,", does not exist. \nChanging ",
-                    "it to ",possibleNewRasterName," locally. To update this in the lazyDir database, \nplease ",
-                    "use lazySave(",y,", overwrite=TRUE, lazyDir=\"",lazyDir,"\"), but this may be slow.")
+#             warning("\nThe file used by object ",y,", ", rasterName,", does not exist. \nChanging ",
+#                     "it to ",possibleNewRasterName," locally. To update this in the lazyDir database, \nplease ",
+#                     "use lazySave(",y,", overwrite=TRUE, lazyDir=\"",lazyDir,"\"), but this may be slow.")
+            hadRasterWrongPath <- TRUE
             assign(y, value=raster(possibleNewRasterName), envir=envir)
           } else {
             warning("Failed to load file ", rasterName, ".\n")
@@ -428,6 +431,11 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
     }
   })
 
+  if(hadRasterWrongPath) {
+    message("\nThe file used by object ",y,", ", rasterName,", does not exist. \nChanging ",
+            "it to ",possibleNewRasterName," locally. To update this in the lazyDir database, \nplease ",
+            "use lazySave(",y,", overwrite=TRUE, lazyDir=\"",lazyDir,"\"), but this may be slow.")
+  }
   return(invisible(sort(obsRead)))
 }
 
@@ -840,68 +848,30 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
   newLazyDir <- checkLazyDir(newLazyDir, create=create)
   setwd(oldLazyDir)
 
-  a=Sys.time()
   os <- tolower(Sys.info()[["sysname"]])
   if(os=="windows") {
     if(useRobocopy) {
-      system(paste0("robocopy /MIR ", normalizePath(oldLazyDir, winslash = "\\"), 
-                  "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
+      if(silent){
+        system(paste0("robocopy /MIR /ETA /NDL /NFL /NJH /NJS ", normalizePath(oldLazyDir, winslash = "\\"), 
+                      "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
+      } else {
+        system(paste0("robocopy /MIR /ETA ", normalizePath(oldLazyDir, winslash = "\\"), 
+                      "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
+      }
     } else {
       file.copy(from = dir(oldLazyDir), to = newLazyDir, 
                 overwrite = overwrite, recursive=TRUE)  
     }
-  } else if(os=="linux") {
-    stop("This next line must be checked. It is currently",
-         paste0("\ncp -R ", oldLazyDir, "/ ", newLazyDir, "/"))
-    system(paste0("cp -R ", oldLazyDir, "/ ", newLazyDir, "/"))
+  } else if(os=="linux" | os == "darwin") {
+    warning("This next line must be checked. It is currently",
+            paste0("cp -R -v -u ", oldLazyDir, "/* ", newLazyDir, "/"))
+    if(silent){
+      system(paste0("cp -R -u ", oldLazyDir, "/* ", newLazyDir, "/"))
+    } else {
+      system(paste0("cp -R -v -u ", oldLazyDir, "/* ", newLazyDir, "/"))
+    }
   }
-#   file.copy(from = dir(oldLazyDir), to = newLazyDir, 
-#             overwrite = overwrite, recursive=TRUE)  
-  b=Sys.time()
-  return(b-a)
-  
-  # Rasters that are pointing to the wrong file will be corrected inside lazyLoad2, if the 
-  #  file pointer is NOT the oldLazyDir. This is usually because of a drive changing letter
-  #  or switching between OSs
-  #oldObjs <- lazyLoad2(lazyDir=newLazyDir, envir = environment())
-  #isRaster <- sapply(lazyLs(lazyDir=newLazyDir), lazyIs, "Raster", lazyDir=newLazyDir)
-  #ras <- names(isRaster)[isRaster]
-  
-  #slot(slot(tmpObj[[1]], "file"), "name") <- 
-  #               normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
-  #browser()
-  # 
-#   if (clearRepo) createEmptyRepo(repoDir = newLazyDir)
-# 
-#   
-#   
-#   counter <- 0
-#   #oldObjs <- lazyLs(lazyDir=oldLazyDir)
-#   for(obj in oldObjs) {
-#     counter <- counter+1
-#     
-# #     if(lazyIs(obj, lazyDir = oldLazyDir, class2 = "Raster")){
-# #       tmpObj <- mget(obj, envir = environment())
-# #       rasterFile <- slot(slot(tmpObj[[1]], "file"), "name")
-# #       if(nchar(rasterFile)>0) {
-# #         if(normalizePath(rasterFile  %>% dirname) != normalizePath(file.path(oldLazyDir, "rasters"))) {
-# #           slot(slot(tmpObj[[1]], "file"), "name") <- 
-# #             normalizePath(file.path(oldLazyDir, "rasters", basename(rasterFile)))
-# #         }
-# #       }
-# #        lazySave(tmpObj,
-# #                 lazyDir=newLazyDir,
-# #                 overwrite=overwrite,
-# #                 copyRasterFile=copyRasterFile,
-# #                 clearRepo=FALSE)
-# #      } else {
-# #      }
-#     
-# 
-#     if ((counter %% 10 == 0) & silent!=TRUE) {
-#       message("Copied ", counter, " of ", length(objsLoaded))
-#     }
-#   }
+  return(invisible(newLazyDir))  
 }
 
 ################################################################################
