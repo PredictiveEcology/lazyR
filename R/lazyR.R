@@ -384,7 +384,8 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
   rasterName <- possibleNewRasterName
   rastersWithChangedName <- character()
   newFilePaths <- character()
-
+  oldFilePaths <- character()
+  
   lapply(objNames, function(y) {
     
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
@@ -404,6 +405,7 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
       if (nchar(gsub(rasterFile, pattern = "filename:", replacement = "")) == 0) {
         lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
       } else {
+        
         rasterName <- gsub(rasterFile$tag, pattern="filename:", replacement = "")
         if (file.exists(rasterName)) {
           assign(y, value=raster(rasterName), envir=envir)
@@ -414,6 +416,7 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
             assign(y, value=raster(possibleNewRasterName), envir=envir)
             rastersWithChangedName <<- c(rastersWithChangedName, y)
             newFilePaths <<- c(newFilePaths, possibleNewRasterName)
+            oldFilePaths <<- c(oldFilePaths, rasterName)
           } else {
             warning("Failed to load file ", rasterName, ".\n")
           }
@@ -435,7 +438,10 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
 
   if(hadRasterWrongPath) {
     if(verbose)
-      message("\nThe original files used by ", paste(rastersWithChangedName, collapse=", "), " did not exist. \nWhen lazyLoaded, ",
+      message("\nThe original files used by ", paste(rastersWithChangedName, collapse=", "), 
+              " did not exist. These old names (left intact in the lazyR database objects) are\n",
+              paste(oldFilePaths, collapse=",\n"),
+              "\nWhen lazyLoaded, ",
             "the following filenames were used instead: \n",paste(newFilePaths, collapse=",\n"),
             " \nTo permanently update these in the lazyDir database, please ",
             "use \nlazySave(",paste(rastersWithChangedName, collapse=", "),", overwrite=TRUE, lazyDir=\"",lazyDir,

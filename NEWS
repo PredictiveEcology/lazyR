@@ -1,0 +1,11 @@
+Known issues: https://github.com/PredictiveEcology/lazyR/issues
+
+version 0.0.2
+=============
+* initial release of lazyR
+* documentation for all functions complete
+* lazyR-package file for easy categorized view of functions
+* deprecated setLazyDir and getLazyDir -> became lazyDir
+* create assignCache and %<% assignment operator
+* bug fixes
+
