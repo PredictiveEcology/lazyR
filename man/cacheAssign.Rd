@@ -56,7 +56,7 @@ Because this works as an assignment operator, any arguments other than the x and
 are not changeable unless it is used as a function call using back ticks \code{`\%<\%`(x, y, notOlderThan = now())}
 }
 \examples{
-setLazyDir(tempdir(), create=TRUE)
+lazyDir(tempdir(), create=TRUE)
 # First time will evaluate it, create a hash, save to lazy database, return result. Will be slow
 system.time(a\%<\%seq(1,1e6))
 

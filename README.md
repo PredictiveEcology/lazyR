@@ -7,7 +7,7 @@ This uses the `archivist` package for a lot of the back end, but replaces the st
 
 The basic work flow is:
 
-1. decide on a folder for the database, and set it using `setLazyDir()`
+1. decide on a folder for the database, and set it using `lazyDir()`
 
 2. save objects to a lazyR database using `lazySave(obj)`
 
@@ -25,13 +25,13 @@ Example:
 
 1. decide on a folder for the database, and set it using
 
-    setLazyDir(tempdir(), create=TRUE)
+    lazyDir(tempdir(), create=TRUE)
 
 2. assign objects via `%<%`. See help(cacheAssign)
 
     a %<% seq(1,10,1)
 
-Common things to use:
+## Common things to use:
 
 - `lazyLs()` will list all objects in the database
 - `lazyLs(tagType="all")` will list the full `archivist` `data.frame` with columns: `md5Hash`, `tag`, `dateCreated`.

@@ -1,0 +1,21 @@
+---
+title: "01 Using lazyR databases as part of an open workflow"
+author:
+  - "Eliot J. B. McIntire"
+date: "`r format(Sys.Date(), format='%B %d %Y')`"
+output:
+  rmarkdown::html_vignette:
+  number_sections: yes
+self_contained: yes
+toc: yes
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{01 Using lazyR databases as part of an open workflow}
+  %\VignetteDepends{lazyR}
+  %\VignetteKeyword{archivist, lazyLoad, database, open workflow}
+  %\usepackage[utf8]{inputenc}
+---
+
+```{r child="../README.md"}
+
+```

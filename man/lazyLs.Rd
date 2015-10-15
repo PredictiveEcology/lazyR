@@ -42,7 +42,7 @@ lazySave(a, b, lazyDir = tmpdir)
 lazyLs(lazyDir=tmpdir)
 
 # can set lazyDir and don't need lazyDir argument
-setLazyDir(tmpdir)
+lazyDir(tmpdir)
 lazyLs()
 
 # can add a tag to file list
