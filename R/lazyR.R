@@ -996,6 +996,6 @@ setLazyDir <- function(lazyDir, create=TRUE) {
 #' @rdname lazyDir
 #' @export
 getLazyDir <- function(lazyDir, create=TRUE) {
-  .Deprecated("lazyDir", "lazyR")
+  .Deprecated("lazyDir()", "lazyR")
   lazyDir()
 }
