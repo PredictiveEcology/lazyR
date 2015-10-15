@@ -55,7 +55,7 @@ if (getRversion() >= "3.1.0") {
 #' @rdname lazySave
 #' @author Eliot McIntire
 #' @export
-#' @importClassesFrom SpaDES spatialObjects
+#' @importClassesFrom SpaDES .spatialObjects
 #' @importFrom raster crs inMemory filename
 #' @importFrom archivist deleteRepo createEmptyRepo saveToRepo addTagsRepo
 #' @importFrom magrittr %>%
@@ -844,6 +844,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
                         #copyRasterFile=TRUE, clearRepo=TRUE,
                         create=TRUE, silent=FALSE) {
 
+  origDir <- getwd()
   oldLazyDir <- checkLazyDir(oldLazyDir)
   newLazyDir <- checkLazyDir(newLazyDir, create=create)
   setwd(oldLazyDir)
@@ -871,6 +872,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
       system(paste0("cp -R -v -u ", oldLazyDir, "/* ", newLazyDir, "/"))
     }
   }
+  setwd(origDir)
   return(invisible(newLazyDir))  
 }
 
