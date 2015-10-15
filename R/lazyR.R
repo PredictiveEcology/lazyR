@@ -55,7 +55,7 @@ if (getRversion() >= "3.1.0") {
 #' @rdname lazySave
 #' @author Eliot McIntire
 #' @export
-#' @importClassesFrom SpaDES .spatialObjects
+#' @importClassesFrom SpaDES spatialObjects
 #' @importFrom raster crs inMemory filename
 #' @importFrom archivist deleteRepo createEmptyRepo saveToRepo addTagsRepo
 #' @importFrom magrittr %>%
