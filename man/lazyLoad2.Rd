@@ -6,7 +6,7 @@
 \title{Load lazy objects from a \code{lazyR} database}
 \usage{
 lazyLoad2(objNames = NULL, md5Hashes = NULL, lazyDir = NULL,
-  envir = parent.frame())
+  envir = parent.frame(), verbose = FALSE)
 }
 \arguments{
 \item{objNames}{A character vector of object names to load lazily, usually from a lazyLs call.
@@ -17,9 +17,13 @@ lazyLoad2(objNames = NULL, md5Hashes = NULL, lazyDir = NULL,
 \item{lazyDir}{Character string of directory to be used for the lazy databases.}
 
 \item{envir}{Environment into which the objects are loaded. Default is \code{.GlobalEnv}.}
+
+\item{verbose}{Logical. If notes about rasters whose file backings were corrected on the
+fly from previous, i.e,. wrong, filenames.}
 }
 \value{
-Invisibly, the objects read in returned. This function is used for its side effects, i.e., loading lazy objects.
+Invisibly, the objects read in returned. This function is used for its
+side effects, i.e., loading lazy objects.
 }
 \description{
 Load all named objects into the specified environment.

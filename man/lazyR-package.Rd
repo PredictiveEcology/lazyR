@@ -13,12 +13,7 @@ Online Vignette: \url{https://github.com/PredictiveEcology/lazyR/blob/master/REA
 
 Bug reports: \url{https://github.com/PredictiveEcology/lazyR/issues}
 }
-\section{1. lazy load databases}{
-
-}
-
-\section{1.1 Saving}{
-
+\section{1 Saving}{
 
 
 \tabular{ll}{
@@ -26,7 +21,7 @@ Bug reports: \url{https://github.com/PredictiveEcology/lazyR/issues}
 }
 }
 
-\section{1.2 Loading}{
+\section{2 Loading}{
 
 
 \tabular{ll}{
@@ -34,7 +29,7 @@ Bug reports: \url{https://github.com/PredictiveEcology/lazyR/issues}
 }
 }
 
-\section{1.3 Working with lazy load databases}{
+\section{3 Working with lazy load databases}{
 
 
 
@@ -45,7 +40,7 @@ Bug reports: \url{https://github.com/PredictiveEcology/lazyR/issues}
 }
 }
 
-\section{1.4 Caching}{
+\section{4 Caching}{
 
 
 \tabular{ll}{
@@ -53,7 +48,7 @@ Bug reports: \url{https://github.com/PredictiveEcology/lazyR/issues}
 }
 }
 
-\section{1.5 Set system-wide lazy database}{
+\section{5 Set system-wide lazy database}{
 
 
 \tabular{ll}{
@@ -61,7 +56,7 @@ Bug reports: \url{https://github.com/PredictiveEcology/lazyR/issues}
 }
 }
 
-\section{1.6 Copy entire lazyR and all files to a new location}{
+\section{6 Copy entire lazyR and all files to a new location}{
 
 
 \tabular{ll}{

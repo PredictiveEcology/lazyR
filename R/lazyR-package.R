@@ -23,23 +23,20 @@
 #' @keywords package
 #'
 #' ------------------------------------------------------------------------------------------
-#' @section 1. lazy load databases
 #'
-#'
-#' @section 1.1 Saving:
-#'
+#' @section 1 Saving:
 #'
 #' \tabular{ll}{
 #'   \code{\link{lazySave}} \tab save objects to a lazy database\cr
 #' }
 #'
-#' @section 1.2 Loading:
+#' @section 2 Loading:
 #'
 #' \tabular{ll}{
 #'   \code{\link{lazyLoad2}} \tab load lazy databases\cr
 #' }
 #' 
-#' @section 1.3 Working with lazy load databases:
+#' @section 3 Working with lazy load databases:
 #'
 #' 
 #' \tabular{ll}{
@@ -48,19 +45,19 @@
 #'   \code{\link{lazyRm}} \tab equivalent to rm(), but for lazyR database\cr
 #' }
 #' 
-#' @section 1.4 Caching:
+#' @section 4 Caching:
 #'
 #' \tabular{ll}{
 #'   \code{\link{\%<\%}} \tab cache and assign in one step\cr
 #' }
 #' 
-#' @section 1.5 Set system-wide lazy database:
+#' @section 5 Set system-wide lazy database:
 #'
 #' \tabular{ll}{
 #'   \code{\link{lazyDir}} \tab set or get system-wide lazyDir\cr
 #' }
 #' 
-#' @section 1.6 Copy entire lazyR and all files to a new location:
+#' @section 6 Copy entire lazyR and all files to a new location:
 #'
 #' \tabular{ll}{
 #'   \code{\link{copyLazyDir}} \tab Copy all files to new lazyR database location\cr

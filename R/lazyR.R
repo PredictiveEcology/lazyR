@@ -330,7 +330,11 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #'
 #' @param envir Environment into which the objects are loaded. Default is \code{.GlobalEnv}.
 #'
-#' @return Invisibly, the objects read in returned. This function is used for its side effects, i.e., loading lazy objects.
+#' @param verbose Logical. If notes about rasters whose file backings were corrected on the 
+#' fly from previous, i.e,. wrong, filenames.
+#'
+#' @return Invisibly, the objects read in returned. This function is used for its 
+#' side effects, i.e., loading lazy objects.
 #'
 #' @seealso \code{\link{lazyLs}}, \code{\link{lazyRm}}.
 #' @docType methods
@@ -353,25 +357,20 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' lazyLoad2("obj", lazyDir=tmpdir)
 #' any(ls()=="obj") # Is TRUE
 #' unlink(tmpdir, recursive = TRUE)
-lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.frame()) {
+lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, 
+                      envir=parent.frame(), verbose=FALSE) {
 
   obsRead <- character(0)
   on.exit(expr = {
     message(length(obsRead), " objects loaded of ", length(objNames))
+    if(hadRasterWrongPath & !verbose) 
+      message("Some raster filenames were corrected. Use verbose next time to see details")
     if (length(obsRead)!=length(objNames)) {
       message("Failed on ", objNames[!(objNames %in% obsRead)][1])
     }
   })
 
   lazyDir <- checkLazyDir(lazyDir = lazyDir, create=FALSE)
-#   if (exists(".lazyDir", envir = .lazyREnv)) {
-#     lazyDir <- get(".lazyDir", envir = .lazyREnv) %>%
-#       gsub(pattern = "/$", x=., replacement = "")
-#   }
-#
-#   if (is.null(lazyDir)) {
-#     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"))
-#   }
 
   if(!is.null(md5Hashes)) {
     objNames <- md5Hashes
@@ -381,8 +380,13 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
   }
 
   hadRasterWrongPath <- FALSE
+  possibleNewRasterName <- ""
+  rasterName <- possibleNewRasterName
+  rastersWithChangedName <- character()
+  newFilePaths <- character()
 
   lapply(objNames, function(y) {
+    
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
@@ -406,11 +410,10 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
         } else {
           possibleNewRasterName <- file.path(lazyDir, "rasters", basename(rasterName))
           if(file.exists(possibleNewRasterName)) {
-#             warning("\nThe file used by object ",y,", ", rasterName,", does not exist. \nChanging ",
-#                     "it to ",possibleNewRasterName," locally. To update this in the lazyDir database, \nplease ",
-#                     "use lazySave(",y,", overwrite=TRUE, lazyDir=\"",lazyDir,"\"), but this may be slow.")
-            hadRasterWrongPath <- TRUE
+            hadRasterWrongPath <<- any(TRUE, hadRasterWrongPath)
             assign(y, value=raster(possibleNewRasterName), envir=envir)
+            rastersWithChangedName <<- c(rastersWithChangedName, y)
+            newFilePaths <<- c(newFilePaths, possibleNewRasterName)
           } else {
             warning("Failed to load file ", rasterName, ".\n")
           }
@@ -431,9 +434,12 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL, envir=parent.
   })
 
   if(hadRasterWrongPath) {
-    message("\nThe file used by object ",y,", ", rasterName,", does not exist. \nChanging ",
-            "it to ",possibleNewRasterName," locally. To update this in the lazyDir database, \nplease ",
-            "use lazySave(",y,", overwrite=TRUE, lazyDir=\"",lazyDir,"\"), but this may be slow.")
+    if(verbose)
+      message("\nThe original files used by ", paste(rastersWithChangedName, collapse=", "), " did not exist. \nWhen lazyLoaded, ",
+            "the following filenames were used instead: \n",paste(newFilePaths, collapse=",\n"),
+            " \nTo permanently update these in the lazyDir database, please ",
+            "use \nlazySave(",paste(rastersWithChangedName, collapse=", "),", overwrite=TRUE, lazyDir=\"",lazyDir,
+            "\") \nbut this may be slow.")
   }
   return(invisible(sort(obsRead)))
 }
@@ -849,19 +855,21 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' obj2 <- 11:20
 #' r <- raster::raster(matrix(1:9, ncol=3))
 #' raster::writeRaster(r, file.path(tempdir(),"r.tif"), overwrite=TRUE)
-#' rm(r)
+#' raster::writeRaster(r, file.path(tempdir(),"ras.tif"), overwrite=TRUE)
+#' rm(r, ras)
 #' r <- raster::raster(file.path(tempdir(),"r.tif"))
+#' ras <- raster::raster(file.path(tempdir(),"ras.tif"))
 #' 
 #' # identify a new and old lazyLoad db
 #' oldLazyDir <- file.path(tempdir(), "old")
 #' newLazyDir <- file.path(tempdir(), "new")
-#' lazySave(obj1, obj2, r, lazyDir=oldLazyDir, overwrite=TRUE)
+#' lazySave(obj1, r, ras, obj2, lazyDir=oldLazyDir, overwrite=TRUE)
 #' 
 #' # copy to new lazyDir location
 #' copyLazyDir(oldLazyDir, newLazyDir)
 #' 
 #' # remove the objects in memory and the old lazyLoad db
-#' rm(obj1, obj2, r)
+#' rm(obj1, obj2, r, ras)
 #' unlink(oldLazyDir, recursive=TRUE)
 #' 
 #' lazyLoad2(lazyDir=newLazyDir) # Objects should be visible after this

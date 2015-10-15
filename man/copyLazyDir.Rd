@@ -48,19 +48,21 @@ obj1 <- 1:10
 obj2 <- 11:20
 r <- raster::raster(matrix(1:9, ncol=3))
 raster::writeRaster(r, file.path(tempdir(),"r.tif"), overwrite=TRUE)
-rm(r)
+raster::writeRaster(r, file.path(tempdir(),"ras.tif"), overwrite=TRUE)
+rm(r, ras)
 r <- raster::raster(file.path(tempdir(),"r.tif"))
+ras <- raster::raster(file.path(tempdir(),"ras.tif"))
 
 # identify a new and old lazyLoad db
 oldLazyDir <- file.path(tempdir(), "old")
 newLazyDir <- file.path(tempdir(), "new")
-lazySave(obj1, obj2, r, lazyDir=oldLazyDir, overwrite=TRUE)
+lazySave(obj1, r, ras, obj2, lazyDir=oldLazyDir, overwrite=TRUE)
 
 # copy to new lazyDir location
 copyLazyDir(oldLazyDir, newLazyDir)
 
 # remove the objects in memory and the old lazyLoad db
-rm(obj1, obj2, r)
+rm(obj1, obj2, r, ras)
 unlink(oldLazyDir, recursive=TRUE)
 
 lazyLoad2(lazyDir=newLazyDir) # Objects should be visible after this
