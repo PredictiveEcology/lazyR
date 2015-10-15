@@ -4,7 +4,9 @@
 \name{.setLazyDir}
 \alias{.getLazyDir}
 \alias{.setLazyDir}
+\alias{getLazyDir}
 \alias{lazyDir}
+\alias{setLazyDir}
 \title{Set and get the lazyR database directory}
 \usage{
 .setLazyDir(lazyDir, create = FALSE)
@@ -12,6 +14,10 @@
 .getLazyDir()
 
 lazyDir(lazyDir = NULL, create = FALSE)
+
+setLazyDir(lazyDir, create = TRUE)
+
+getLazyDir(lazyDir, create = TRUE)
 }
 \arguments{
 \item{lazyDir}{Character string of directory to be used for the lazy databases.

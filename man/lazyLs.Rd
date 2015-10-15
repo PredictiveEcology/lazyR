@@ -34,8 +34,7 @@ lazy load database. The listing can be done with a tag.
 }
 \examples{
 \dontrun{
-library(SpaDES)
-tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
+tmpdir <- lazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
 a <- rnorm(10)
 b <- rnorm(20)
 lazySave(a, b, lazyDir = tmpdir)

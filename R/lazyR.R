@@ -985,3 +985,17 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
            overwrite=TRUE)
   delayedAssign(x = name, value = y, eval.env = environment(), assign.env = parent.frame())
 }
+
+#' @rdname lazyDir
+#' @export
+setLazyDir <- function(lazyDir, create=TRUE) {
+  .Deprecated("lazyDir", "lazyR")
+  lazyDir(lazyDir=lazyDir, create=create)
+}
+
+#' @rdname lazyDir
+#' @export
+getLazyDir <- function(lazyDir, create=TRUE) {
+  .Deprecated("lazyDir", "lazyR")
+  lazyDir()
+}

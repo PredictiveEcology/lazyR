@@ -41,7 +41,8 @@ all machines have the same mapping to that network location.
 }
 \examples{
 \dontrun{
-
+library(raster)
+library(rgdal)
 # make some objects
 obj1 <- 1:10
 obj2 <- 11:20
@@ -62,7 +63,8 @@ copyLazyDir(oldLazyDir, newLazyDir)
 rm(obj1, obj2, r)
 unlink(oldLazyDir, recursive=TRUE)
 
-lazyLoad2(lazyDir=newLazyDir)
+lazyLoad2(lazyDir=newLazyDir) # Objects should be visible after this
+ls()
 unlink(newLazyDir, recursive=TRUE)
 }
 }
