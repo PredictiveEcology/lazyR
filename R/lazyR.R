@@ -955,6 +955,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
 #' @export
 #' @docType methods
 #' @rdname cacheAssign
+#' @aliases assignCache
 #' @importFrom archivist cache
 #' @importFrom magrittr %>%
 #'

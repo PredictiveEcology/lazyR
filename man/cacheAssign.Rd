@@ -3,7 +3,6 @@
 \docType{methods}
 \name{assignCache}
 \alias{\%<\%}
-\alias{`\%<\%`}
 \alias{assignCache}
 \title{Lazy cache assignment operator}
 \usage{
@@ -15,7 +14,7 @@ x \%<\% y
 \arguments{
 \item{x}{the left hand side objectName to assign to, analogous to \code{<-}.}
 
-\item{y}{the right hand side. Currently, only accepts simple function calls.}
+\item{y}{the right hand side. Anything that R understands,}
 
 \item{lazyDir}{the lazyDir to use}
 
