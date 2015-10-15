@@ -3,7 +3,7 @@ Title: Create lazyLoad databases for R objects
 Version: 0.0.1
 Date: 2015-10-09
 Authors@R: c(
-  person(c("Eliot", "J", "B"), "McIntire", email="eliot.mcintire@canada.ca",
+  person(c("Eliot", "J", "B"), "McIntire", email="eliotmcintire@gmail.com",
   role = c("aut", "cre")),
   person(c("Alex", "M"), "Chubaty", email="alexander.chubaty@canada.ca",
   role=c("ctb"))
@@ -19,8 +19,12 @@ Imports:
     digest,
     dplyr,
     magrittr,
+    methods,
     raster,
+    sp,
     SpaDES
 Collate:
     'lazyR-package.R'
     'lazyR.R'
+    
+    
