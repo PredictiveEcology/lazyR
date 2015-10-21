@@ -972,6 +972,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
 #' @aliases assignCache
 #' @importFrom archivist cache
 #' @importFrom magrittr %>%
+#' @importFrom lazyeval lazy_eval
 #'
 #' @author Eliot McIntire
 #' @examples
@@ -992,14 +993,15 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
 assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=environment()) {
 
   lazyDir <- checkLazyDir(lazyDir = lazyDir)
-  funCall <- sapply(match.call() %>% as.list,
-                    function(x) x)[2:3]
+  funCall <- y$expr
 
-  #digestCall <- digest(match.call()$y) # This would be for right hand side only
-  inputs <- parse(text=funCall$y)[-1]
-  digestCall <- digest(append(sapply(inputs, eval),funCall$x))
-  name <- deparse(substitute(x, env = substituteEnv))
-
+  def <- funCall[[1]]
+  #inputs <- match.call(definition=match.fun(def), call = funCall)[-1]
+  inputs <- match.call(call = funCall)[-1]
+  objName <- as.character(x)
+  
+  digestCall <- digest(append(sapply(inputs, eval),objName)) # includes object name, x
+  
   localTags <- showLocalRepo(lazyDir, "tags")
   isInRepo <- localTags[localTags$tag == paste0("cacheId:", digestCall), , drop = FALSE]
 
@@ -1007,23 +1009,26 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=env
     lastEntry <- max(isInRepo$createdDate)
     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
       lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
-      if(exists(name, envir=parent.frame())) rm(list = name, envir=parent.frame())
+      if(exists(objName, envir=y$env)) rm(list = objName, envir=y$env)
       lazyLoad2(lazyLs(digestCall), envir = environment())
-      delayedAssign(x = name, value = get(lazyLs(digestCall), envir=environment()), 
-                    eval.env = environment(), assign.env = parent.frame())
+      delayedAssign(x = objName, value = get(lazyLs(digestCall), envir=environment()), 
+                    eval.env = environment(), assign.env = y$env)
       return(invisible())
     }
   }
 
-  output <- eval(y)
-  lazySave(output, lazyDir=lazyDir, objNames = name, tags=paste0("cacheId:", digestCall),
+  output <- lazy_eval(y)
+  lazySave(output, lazyDir=lazyDir, objNames = objName, tags=paste0("cacheId:", digestCall),
            overwrite=TRUE)
-  delayedAssign(x = name, value = y, eval.env = environment(), assign.env = parent.frame())
+  delayedAssign(x = objName, value = output, eval.env = environment(), assign.env = y$env)
 }
+
 #' @rdname cacheAssign
+#' @importFrom lazyeval lazy
 #' @export
 `%<%` <- function(x, y) {
-  assignCache(x,y)
+  x <- match.call()$x %>% as.character
+  assignCache(x,lazy(y))
 }
 
 #' @rdname lazyDir
