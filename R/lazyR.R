@@ -1045,4 +1045,41 @@ getLazyDir <- function(lazyDir, create=TRUE) {
   lazyDir()
 }
 
+#' Does an object exist in the lazyDir
+#'
+#' @param objName A character string indicating the object name
+#'
+#' @param lazyDir the lazyDir to use
+#'
+#' @param exact Should the character string matching be exact, i.e., ^objNames$ 
+#' in regexp. Passed to \code{lazyLs()}
+#' 
+#' @return Logical
+#'
+#' @importFrom dplyr filter select_ as.tbl
+#'
+#' @seealso \code{\link{lazyLs}}, \code{\link{lazyLoad2}}
+#' @docType methods
+#' @author Eliot McIntire
+#' @rdname lazyExists
+#' @export
+#' @examples
+#' lazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
+#' a <- rnorm(10)
+#' lazySave(a)
+#' lazyExists("a")
+#' lazyRm("a")
+#' lazyExists("b") # error, does not exist
+#' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
+lazyExists <- function(objName, lazyDir=NULL, exact=TRUE) {
+  
+  lazyDir <- checkLazyDir(lazyDir)
+
+  out <- lazyLs(objName, exact=exact)
+  if(length(out) > 0) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
 
