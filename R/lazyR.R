@@ -842,6 +842,9 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' faster than the internal \code{file.copy} function. Uses /MIR flag.
 #'
 #' @param overwrite Passed to \code{file.copy}
+#' 
+#' @param delDestination Logical, whether the destination should have any files deleted, if they don't exist 
+#' in the source. This is /purge
 #'
 #' @param create Passed to \code{checkLazyDir}
 #'
@@ -883,7 +886,7 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
 #' unlink(newLazyDir, recursive=TRUE)
 #' }
 copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE, 
-                        overwrite=TRUE,
+                        overwrite=TRUE, delDestination=FALSE, 
                         #copyRasterFile=TRUE, clearRepo=TRUE,
                         create=TRUE, silent=FALSE) {
 
@@ -896,10 +899,10 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
   if(os=="windows") {
     if(useRobocopy) {
       if(silent){
-        system(paste0("robocopy /MIR /ETA /NDL /NFL /NJH /NJS ", normalizePath(oldLazyDir, winslash = "\\"), 
+        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(oldLazyDir, winslash = "\\"), 
                       "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
       } else {
-        system(paste0("robocopy /MIR /ETA ", normalizePath(oldLazyDir, winslash = "\\"), 
+        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(oldLazyDir, winslash = "\\"), 
                       "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
       }
     } else {
@@ -908,11 +911,12 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
     }
   } else if(os=="linux" | os == "darwin") {
     warning("This next line must be checked. It is currently",
-            paste0("cp -R -v -u ", oldLazyDir, "/* ", newLazyDir, "/"))
+            #paste0("cp -R -v -u ", oldLazyDir, "/* ", newLazyDir, "/"))
+            paste0("rsync -avP ","--delete "[delDestination], oldLazyDir, "/ ", newLazyDir))
     if(silent){
-      system(paste0("cp -R -u ", oldLazyDir, "/* ", newLazyDir, "/"))
+      system(paste0("rsync -aP ","--delete "[delDestination], oldLazyDir, "/ ", newLazyDir))
     } else {
-      system(paste0("cp -R -v -u ", oldLazyDir, "/* ", newLazyDir, "/"))
+      system(paste0("rsync -avP ","--delete "[delDestination], oldLazyDir, "/ ", newLazyDir))
     }
   }
   setwd(origDir)
