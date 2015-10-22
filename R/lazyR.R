@@ -995,9 +995,15 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=env
   lazyDir <- checkLazyDir(lazyDir = lazyDir)
   funCall <- y$expr
 
-  def <- funCall[[1]]
   #inputs <- match.call(definition=match.fun(def), call = funCall)[-1]
-  inputs <- match.call(call = funCall)[-1]
+  if(length(funCall)==1) { # This is for an object passing
+    inputs <- funCall
+  } else {
+    inputs <- try(match.call(eval(funCall[[1]]), call = funCall)[-1],
+                  silent = TRUE)
+    if(is(inputs, "try-error"))
+      inputs <- match.call(call = funCall)[-1]
+  }
   objName <- as.character(x)
   
   digestCall <- digest(append(sapply(inputs, eval),objName)) # includes object name, x
@@ -1047,7 +1053,7 @@ getLazyDir <- function(lazyDir, create=TRUE) {
 
 #' Does an object exist in the lazyDir
 #'
-#' @param objName A character string indicating the object name
+#' @param objNames A character vector indicating the object names to test
 #'
 #' @param lazyDir the lazyDir to use
 #'
@@ -1071,13 +1077,13 @@ getLazyDir <- function(lazyDir, create=TRUE) {
 #' lazyRm("a")
 #' lazyExists("b") # error, does not exist
 #' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
-lazyExists <- function(objName, lazyDir=NULL, exact=TRUE) {
+lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
   
   lazyDir <- checkLazyDir(lazyDir)
 
-  out <- lazyLs(objName, exact=exact)
+  out <- sapply(objNames, lazyLs, exact=exact)
   if(length(out) > 0) {
-    return(TRUE)
+    return(objNames %in% out)
   } else {
     return(FALSE)
   }
