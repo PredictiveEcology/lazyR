@@ -910,9 +910,6 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
                 overwrite = overwrite, recursive=TRUE)  
     }
   } else if(os=="linux" | os == "darwin") {
-    warning("This next line must be checked. It is currently",
-            #paste0("cp -R -v -u ", oldLazyDir, "/* ", newLazyDir, "/"))
-            paste0("rsync -avP ","--delete "[delDestination], oldLazyDir, "/ ", newLazyDir))
     if(silent){
       system(paste0("rsync -aP ","--delete "[delDestination], oldLazyDir, "/ ", newLazyDir))
     } else {
