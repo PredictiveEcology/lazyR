@@ -725,6 +725,7 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL) {
 #' }
 checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
   # check that lazyDir is specified, if not, use lazyDir, if still nothing, then use temp
+  if(missing(lazyDir)) lazyDir <- NULL
   if (is.null(lazyDir)) {
     lazyDir= lazyDir()
     if (is.null(lazyDir)) {
@@ -991,23 +992,27 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
 #' system.time(a<-seq(1,1e6))
 #'
 #' lazyRm("a")
-assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=environment()) {
+assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environment(-1)) {
 
+  y <- lazy(y)
   lazyDir <- checkLazyDir(lazyDir = lazyDir)
-  funCall <- y$expr
+   if(is.null(y$expr)) {
+     y <- lazy(y)
+     if(is.null(y$env)) y$env <- envir
+   }
 
-  #inputs <- match.call(definition=match.fun(def), call = funCall)[-1]
-  if(length(funCall)==1) { # This is for an object passing
-    inputs <- funCall
+  #inputs <- match.call(definition=match.fun(def), call = y$expr)[-1]
+  if(length(y$expr)==1) { # This is for an object passing
+    inputs <- y$expr
   } else {
-    inputs <- try(match.call(eval(funCall[[1]]), call = funCall)[-1],
+    inputs <- try(match.call(eval(y$expr[[1]]), call = y$expr)[-1],
                   silent = TRUE)
     if(is(inputs, "try-error"))
-      inputs <- match.call(call = funCall)[-1]
+      inputs <- match.call(call = y$expr)[-1]
   }
   objName <- as.character(x)
   
-  digestCall <- digest(append(sapply(inputs, eval),objName)) # includes object name, x
+  digestCall <- digest(append(sapply(inputs, function(h1) eval(h1)),objName)) # includes object name, x
   
   localTags <- showLocalRepo(lazyDir, "tags")
   isInRepo <- localTags[localTags$tag == paste0("cacheId:", digestCall), , drop = FALSE]
@@ -1016,10 +1021,10 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=env
     lastEntry <- max(isInRepo$createdDate)
     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
       lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
-      if(exists(objName, envir=y$env)) rm(list = objName, envir=y$env)
+      if(exists(objName, envir=envir)) rm(list = objName, envir=envir)
       lazyLoad2(lazyLs(digestCall), envir = environment())
       delayedAssign(x = objName, value = get(lazyLs(digestCall), envir=environment()), 
-                    eval.env = environment(), assign.env = y$env)
+                    eval.env = environment(), assign.env = envir)
       return(invisible())
     }
   }
@@ -1027,7 +1032,7 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=env
   output <- lazy_eval(y)
   lazySave(output, lazyDir=lazyDir, objNames = objName, tags=paste0("cacheId:", digestCall),
            overwrite=TRUE)
-  delayedAssign(x = objName, value = output, eval.env = environment(), assign.env = y$env)
+  delayedAssign(x = objName, value = output, eval.env = environment(), assign.env = envir)
 }
 
 #' @rdname cacheAssign
@@ -1035,7 +1040,8 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, substituteEnv=env
 #' @export
 `%<%` <- function(x, y) {
   x <- match.call()$x %>% as.character
-  assignCache(x,lazy(y))
+  y1 <- lazy(y)
+  assignCache(x, y, envir=y1$env)
 }
 
 #' @rdname lazyDir
