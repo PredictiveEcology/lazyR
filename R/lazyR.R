@@ -354,7 +354,7 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
       
       # Test if it had a filename associated with it; if not, then load the rda directly
       if (nchar(gsub(rasterFile, pattern = "filename:", replacement = "")) == 0) {
-        lazyLoadFromRepo(md5Hash, repoDir=lazyDir, objName=y, envir=envir)
+        lazyLoadFromRepo(md5Hash, lazyDir=lazyDir, objName=y, envir=envir)
       } else {
         
         rasterName <- gsub(rasterFile$tag, pattern="filename:", replacement = "")
@@ -385,7 +385,7 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
         md5Hash <- y
       }
       
-      lazyLoadFromRepo(md5Hash, repoDir=lazyDir, objName=y, envir=envir)
+      lazyLoadFromRepo(md5Hash, lazyDir=lazyDir, objName=y, envir=envir)
       #lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
 
       obsRead <<- c(obsRead,  y)
@@ -459,8 +459,6 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
         }
 
         rmFromRepo(toRm, repoDir = lazyDir)
-        unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdx")))
-        unlink(file.path(lazyDir, "gallery", paste0(toRm, ".rdb")))
         message(paste("Object removed:", objName))
       }
     } else {
@@ -916,7 +914,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
 #'
 #' @param notOlderThan see \code{\link[archivist]{cache}}
 #'
-#' @param substituteEnv The environment to be passed to substitute internally.
+#' @param envir The environment to be passed to substitute internally.
 #' This may help with programming control.
 #'
 #' @note Because this works as an assignment operator, any arguments other than the x and y
@@ -944,7 +942,7 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
 #' system.time(a%<%seq(1,1e6))
 #' 
 #' # Third time - but force re-evaluation
-#' system.time(assignCache(a, seq(1,1e6), notOlderThan = Sys.time()))
+#' system.time(assignCache("a", seq(1,1e6), notOlderThan = Sys.time()))
 #' 
 #' # For comparison, normal assignment may be faster if it is a fast function in R
 #' system.time(a<-seq(1,1e6))
@@ -952,6 +950,8 @@ copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE,
 #' lazyRm("a")
 assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environment(-1)) {
 
+  if(!is.character(x)) stop("x must be a character")
+  
   y <- lazy(y)
   lazyDir <- checkLazyDir(lazyDir = lazyDir)
    if(is.null(y$expr)) {
@@ -967,9 +967,8 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
     if(is(inputs, "try-error"))
       inputs <- match.call(call = y$expr)[-1]
   }
-  objName <- as.character(x)
-  
-  digestCall <- digest(append(sapply(inputs, function(h1) eval(h1)),objName)) # includes object name, x
+
+  digestCall <- digest(append(sapply(inputs, function(h1) eval(h1)),x)) # includes object name, x
   
   localTags <- showLocalRepo(lazyDir, "tags")
 
@@ -980,19 +979,19 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
       lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
       objNameInRepo <- lazyLs(digestCall, lazyDir=lazyDir)
-      if(length(objNameInRepo)>1) objNameInRepo <- objNameInRepo[objNameInRepo %in% objName]
-      if(exists(objName, envir=envir)) rm(list = objName, envir=envir)
+      if(length(objNameInRepo)>1) objNameInRepo <- objNameInRepo[objNameInRepo %in% x]
+      if(exists(x, envir=envir)) rm(list = x, envir=envir)
         lazyLoad2(objNameInRepo, envir = environment())
-        delayedAssign(x = objName, value = get(lazyLs(digestCall), envir=environment()), 
+        delayedAssign(x = x, value = get(lazyLs(digestCall), envir=environment()), 
                       eval.env = environment(), assign.env = envir)
         return(invisible())
     }
   }
 
   output <- lazy_eval(y)
-  lazySave(output, lazyDir=lazyDir, objNames = objName, tags=paste0("cacheId:", digestCall),
+  lazySave(output, lazyDir=lazyDir, objNames = x, tags=paste0("cacheId:", digestCall),
            overwrite=TRUE)
-  delayedAssign(x = objName, value = output, eval.env = environment(), assign.env = envir)
+  delayedAssign(x = x, value = output, eval.env = environment(), assign.env = envir)
 }
 
 #' @rdname cacheAssign
@@ -1056,6 +1055,33 @@ lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
   }
 }
 
+
+#' Alternative to saveToRepo for rasters
+#' 
+#' Rasters are sometimes file-based, so the normal save mechanism doesn't work. This function creates an
+#' explicit save of the file that is backing the raster, in addition to saving the object metadata in 
+#' the archivist repository database.
+#'
+#' @param obj The raster object to save to the repository.
+#'
+#' @param objName A character representation of the object name.
+#'
+#' @param lazyDir the lazyDir to use.
+#'
+#' @param tags Optional character vector of tags. Passed to \code{saveToRepo}.
+#' 
+#' @param compareRasterFileLength Numeric. This is passed to the length arg in \code{digest}
+#' when determining if the Raster file is already in the database. Default 1e6. Passed to \code{lazySave}.
+#' 
+#' @return A raster object and its file backing will be passed to the archivist repository. 
+#'
+#' @importFrom digest digest
+#' @importFrom archivist saveToRepo
+#'
+#' @seealso \code{\link{lazyLs}}, \code{\link{lazyLoad2}}
+#' @docType methods
+#' @author Eliot McIntire
+#' @rdname saveToRepoRaster
 #' @export
 saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compareRasterFileLength=1e6) {
 
@@ -1112,77 +1138,30 @@ saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compare
 }
 
 
+#' Lazy load mechanism
+#' 
+#' This creates the promise to be evaluated later, used internally by \code{lazyLoad2}.
+#'
+#' @param artifact A character vector of the hash associated with an object in the lazyDir
+#'
+#' @param lazyDir the lazyDir to use
+#' 
+#' @param objName Must pass the object name as a character string to assign the lazy evaluation to
+#'
+#' @param envir The environment to assign into (passed to \code{assign.env} arg of \code{delayedAssign})
+#' 
+#' @return An object named objName is assigned into the envir, lazily via \code{delayedAssign}.
+#'
+#' @importFrom lazyeval lazy lazy_eval
+#' @importFrom archivist loadFromLocalRepo 
+#'
+#' @seealso \code{\link{lazyLs}}, \code{\link{lazyLoad2}}
+#' @docType methods
+#' @author Eliot McIntire
+#' @rdname lazyLoadFromRepo
 #' @export
-lazyLoadFromRepo <- function(artifact, repoDir=lazyDir(), objName, envir=parent.frame(1)) {
-  loadedObj <- lazy(loadFromLocalRepo(artifact, repoDir, value=TRUE))
+lazyLoadFromRepo <- function(artifact, lazyDir=lazyDir(), objName, envir=parent.frame(1)) {
+  loadedObj <- lazy(loadFromLocalRepo(artifact, lazyDir, value=TRUE))
   delayedAssign(objName, value = lazy_eval(loadedObj), assign.env = envir)
 }
 
-if(FALSE ){
-  devtools::load_all("~/Documents/GitHub/lazyR");
-  exampleRepoDir <- tempdir()
-  lazyDir(exampleRepoDir, create=TRUE)
-  deleteRepo( exampleRepoDir )
-  createEmptyRepo( repoDir = exampleRepoDir )
-  
-  
-  showLocalRepo(method="md5hashes")
-  a <- 1:1e2
-  lazySave(a)
-  lazyLs("b", exact=TRUE)
-  lazyExists("a")
-  rm(a)
-  lazyLoad2("a")
-  
-  
-  lazyObjectName()
-  artifact=saveToRepo( a, repoDir=exampleRepoDir )
-  showLocalRepo(method="md5hashes")
-  
-  rm(a)
-  rm(b)
-  #  system.time(lazyLoadFromRepo(artifact, objName="b") )
-  #  system.time()
-  
-  system.time({loadFromLocalRepo(artifact)})
-  system.time({lazyLoadFromRepo(artifact, objName="b")})
-  
-  # Plotting speed
-  system.time({hist(a)})
-  system.time({hist(b)})
-  rm(a)
-  rm(b)
-  system.time({lazyLoad2("a"); hist(a)})
-  rm(a)
-  
-  system.time({loadFromLocalRepo(artifact) ;hist(a)})
-  
-  system.time({lazyLoadFromRepo(artifact, objName="b"); hist(b)})
-  
-  a %<% 1:10
-  r %<% raster::raster(matrix(1:9e4, ncol=3e2))
-  r1 %<% raster::raster(matrix(1:9, ncol=3))
-
-  lazyDir(oldLazyDir)
-  #' # make some objects
-  obj1 <- 1:10
-  obj2 <- 11:20
-  r %<% raster::raster(matrix(1:9e4, ncol=3e2))
-  ras %<% raster::raster(matrix(1:9e4, ncol=3e2))
-  
-  raster::writeRaster(r, file.path(tempdir(),"r.tif"), overwrite=TRUE)
-  raster::writeRaster(r, file.path(tempdir(),"ras.tif"), overwrite=TRUE)
-  rm(r, ras)
-  r %<% raster::raster(file.path(tempdir(),"r.tif"))
-  ras %<% raster::raster(file.path(tempdir(),"ras.tif"))
-  copyLazyDir(oldLazyDir, newLazyDir)
-  
-  rm(r, ras)
-  unlink(oldLazyDir)
-    
-  r %<% raster::raster(file.path(tempdir(),"r.tif"))
-  ras %<% raster::raster(file.path(tempdir(),"ras.tif"))
-  library(SpaDES)
-  Plot(r, ras, new=T)
-  
-r}

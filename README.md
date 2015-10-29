@@ -1,7 +1,7 @@
 # lazyR
 
 An R package for stashing objects in lazy load databases, analogous to lazy loaded packages.
-This uses the `archivist` package for a lot of the back end, but replaces the storing of `.rda` objects in the database with `.rdx`/`.rdb` objects.
+This uses the `archivist` package for the back end, using the `.rda` files or raster-based files. The lazy mechanism is at loading time only, creating a promise to evaluate the `loadFromLocalRepo()` function when it is needed.
 
 ## Using manual lazy saving
 
@@ -50,10 +50,8 @@ Notes:
     - the original object name, prefixed with `objectName:`    
     
 - Objects of class `Raster*` are special because of their "sometimes on disk" nature. 
-
-    - If the object was in memory, it will be saved as any other `R` object within a `.rdb`/`.rdx` file pair. 
-    - If, on the other hand, it was being read from disk, then only the file location will be stored within the `.rdb`/`.rdx` pair. 
+    
+    - If there is a file backing the object, then this file will be copied to the lazyDir directory, with a subdirectory called "raster"
     - The original file will be used as part of the lazy loading.
     - If the original file is a temporary file, be sure to use `lazySave(..., copyRasterFile=TRUE)` to save it. This is also required to ensure portability of a `lazyR` database.
 
-- Objects are stored individually within an `.rdb`/`.rdx` file pair, with the file pair name being the md5Hash. The archivist package saves an file with `.rda`, but it will be a small file, just the object name hashed. So there are 3 files for each object.

@@ -6,7 +6,8 @@
 \title{Copy a lazyDir and all the files in it}
 \usage{
 copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, useRobocopy = TRUE,
-  overwrite = TRUE, create = TRUE, silent = FALSE)
+  overwrite = TRUE, delDestination = FALSE, create = TRUE,
+  silent = FALSE)
 }
 \arguments{
 \item{oldLazyDir}{The source lazyDir}
@@ -17,6 +18,9 @@ copyLazyDir(oldLazyDir = NULL, newLazyDir = NULL, useRobocopy = TRUE,
 faster than the internal \code{file.copy} function. Uses /MIR flag.}
 
 \item{overwrite}{Passed to \code{file.copy}}
+
+\item{delDestination}{Logical, whether the destination should have any files deleted, if they don't exist
+in the source. This is /purge}
 
 \item{create}{Passed to \code{checkLazyDir}}
 
@@ -59,7 +63,7 @@ newLazyDir <- file.path(tempdir(), "new")
 lazySave(obj1, r, ras, obj2, lazyDir=oldLazyDir, overwrite=TRUE)
 
 # copy to new lazyDir location
-copyLazyDir(oldLazyDir, newLazyDir)
+copyLazyDir(oldLazyDir, newLazyDir, create=TRUE)
 
 # remove the objects in memory and the old lazyLoad db
 rm(obj1, obj2, r, ras)

@@ -61,6 +61,7 @@ truly exact comparisons behaviour is needed.
 \examples{
 a <- rnorm(10)
 b <- rnorm(20)
+lazyDir(file.path(tempdir(),"lazyDir"), create=TRUE)
 lazySave(a, b)
 \dontrun{ # may be many objects
 lazySave(mget(ls(envir=.GlobalEnv)))

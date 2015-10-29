@@ -1,4 +1,4 @@
-lazyR: using lazy object databases
+lazyR: adds a lazy mechanism to archivist package
 
 Unless otherwise noted, source code of the `lazyR` R package is covered under
 Crown Copyright, Government of Canada, and distributed under the GPL3 license.
