@@ -146,42 +146,44 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
       }
       if (shouldSave) {
         if (is(obj, "Raster")) {
-          if (copyRasterFile & !inMemory(obj)) {
-            curFilename <- normalizePath(filename(obj), winslash = "/")
-            checkPath(file.path(lazyDir, "rasters"), create=TRUE)
-
-            saveFilename <- file.path(lazyDir, "rasters", basename(curFilename)) %>%
-              normalizePath(., winslash = "/", mustWork=FALSE)
-
-            if (saveFilename!=curFilename) {
-              shouldCopy <- TRUE
-              if (file.exists(saveFilename)) {
-                if (!(compareRasterFileLength==Inf)) {
-                  if (digest(file = saveFilename, length=compareRasterFileLength) ==
-                      digest(file = curFilename, length=compareRasterFileLength)) {
-                    shouldCopy <- FALSE
-                  }
-                } else {
-                  shouldCopy = TRUE
-                }
-              }
-              if (shouldCopy) {
-                pathExists <- file.exists(dirname(saveFilename))
-                if (!pathExists) dir.create(dirname(saveFilename))
-                file.copy(to = saveFilename, overwrite = TRUE,
-                          recursive = FALSE, copy.mode = TRUE,
-                          from = curFilename)
-              }
-              slot(slot(objList[[N]], "file"), "name") <- saveFilename
-            }
-          } else {
-            saveFilename <- slot(slot(obj, "file"), "name")
-          }
-          saveToRepo(objName, repoDir = lazyDir,
-                     userTags = c(paste0("objectName:", objName), tags,
-                                  paste0("class:", is(obj)),
-                                  paste0("filename:", saveFilename)
-                                ))
+            saveToRepoRaster(obj, objName=objName, lazyDir=lazyDir, 
+                                       tags=tags, compareRasterFileLength=compareRasterFileLength)
+#           if (copyRasterFile & !inMemory(obj)) {
+#             curFilename <- normalizePath(filename(obj), winslash = "/")
+#             checkPath(file.path(lazyDir, "rasters"), create=TRUE)
+# 
+#             saveFilename <- file.path(lazyDir, "rasters", basename(curFilename)) %>%
+#               normalizePath(., winslash = "/", mustWork=FALSE)
+# 
+#             if (saveFilename!=curFilename) {
+#               shouldCopy <- TRUE
+#               if (file.exists(saveFilename)) {
+#                 if (!(compareRasterFileLength==Inf)) {
+#                   if (digest(file = saveFilename, length=compareRasterFileLength) ==
+#                       digest(file = curFilename, length=compareRasterFileLength)) {
+#                     shouldCopy <- FALSE
+#                   }
+#                 } else {
+#                   shouldCopy = TRUE
+#                 }
+#               }
+#               if (shouldCopy) {
+#                 pathExists <- file.exists(dirname(saveFilename))
+#                 if (!pathExists) dir.create(dirname(saveFilename))
+#                 file.copy(to = saveFilename, overwrite = TRUE,
+#                           recursive = FALSE, copy.mode = TRUE,
+#                           from = curFilename)
+#               }
+#               slot(slot(objList[[N]], "file"), "name") <- saveFilename
+#             }
+#           } else {
+#             saveFilename <- slot(slot(obj, "file"), "name")
+#           }
+#           saveToRepo(objName, repoDir = lazyDir,
+#                      userTags = c(paste0("objectName:", objName), tags,
+#                                   paste0("class:", is(obj)),
+#                                   paste0("filename:", saveFilename)
+#                                 ))
         } else {
           saveToRepo(objName, repoDir = lazyDir,
                      userTags = c(paste0("objectName:", objName), tags,
@@ -387,7 +389,6 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
   oldFilePaths <- character()
   
   lapply(objNames, function(y) {
-    
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
@@ -1094,5 +1095,59 @@ lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
   } else {
     return(FALSE)
   }
+}
+
+#' @export
+saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compareRasterFileLength=1e6) {
+  if(is.null(objName)) 
+    objName <- deparse(substitute(obj))
+  lazyDir <- checkLazyDir(lazyDir)
+  if (!inMemory(obj)) {
+    curFilename <- normalizePath(filename(obj), winslash = "/")
+    
+    saveFilename <- file.path(lazyDir, "rasters", basename(curFilename)) %>%
+      normalizePath(., winslash = "/", mustWork=FALSE)
+    
+    if (saveFilename!=curFilename) {
+      shouldCopy <- TRUE
+      if (file.exists(saveFilename)) {
+        if (!(compareRasterFileLength==Inf)) {
+          if (digest(file = saveFilename, length=compareRasterFileLength) ==
+                digest(file = curFilename, length=compareRasterFileLength)) {
+            shouldCopy <- FALSE
+          }
+        } else {
+          shouldCopy = TRUE
+        }
+      }
+      if (shouldCopy) {
+        pathExists <- file.exists(dirname(saveFilename))
+        if (!pathExists) dir.create(dirname(saveFilename))
+        if(saveFilename %>% grepl(., pattern=".grd$")) {
+          file.copy(to = saveFilename, overwrite = TRUE,
+                    recursive = FALSE, copy.mode = TRUE,
+                    from = curFilename)
+          griFilename <- sub(saveFilename, pattern=".grd$", replacement = ".gri")
+          curGriFilename <- sub(curFilename, pattern=".grd$", replacement = ".gri")
+          file.copy(to = griFilename, overwrite = TRUE,
+                    recursive = FALSE, copy.mode = TRUE,
+                    from = curGriFilename)
+        } else {
+          file.copy(to = saveFilename, overwrite = TRUE,
+                  recursive = FALSE, copy.mode = TRUE,
+                  from = curFilename)
+        }
+      }
+      slot(slot(obj, "file"), "name") <- saveFilename
+    }
+  } else {
+    saveFilename <- slot(slot(obj, "file"), "name")
+  }
+  
+  saveToRepo(objName, repoDir = lazyDir,
+             userTags = c(paste0("objectName:", objName), tags,
+                          paste0("class:", is(obj)),
+                          paste0("filename:", saveFilename)
+             ))
 }
 
