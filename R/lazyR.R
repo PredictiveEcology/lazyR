@@ -351,7 +351,6 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
 
       # Test if it had a filename associated with it; if not, then load the rda directly
       if (nchar(gsub(rasterFile, pattern = "filename:", replacement = "")) == 0) {
-        browser()
         lazyLoadFromRepo(md5Hash, repoDir=lazyDir, objName=y, envir=envir)
         #lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
       } else {
@@ -510,7 +509,7 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
 #' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE) # remove folder and lazyDir
 .setLazyDir <- function(lazyDir, create=FALSE) {
   
-  lazyDir <- checkLazyDir(lazyDir, create = create)
+  #lazyDir <- checkLazyDir(lazyDir, create = create)
 
   stopifnot(is.character(lazyDir))
   if (!dir.exists(lazyDir)) {
@@ -552,6 +551,8 @@ lazyDir <- function(lazyDir=NA, create=FALSE) {
 
   if(is.na(lazyDir))
     return(.getLazyDir())
+  
+  lazyDir <- checkLazyDir(lazyDir)
   
   return(invisible(.setLazyDir(lazyDir, create=create)))
 }
@@ -678,7 +679,7 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL) {
 #' checkLazyDir(create=TRUE) # because missing, it will provide a tmpdir
 #' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 #' }
-checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
+checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
   # check that lazyDir is specified, if not, use lazyDir, if still nothing, then use temp
   if(missing(lazyDir)) lazyDir <- NULL
   if (is.null(lazyDir)) {
@@ -690,7 +691,7 @@ checkLazyDir <- function(lazyDir=NULL, create=FALSE) {
         stop("Please specify a lazyDir that exists, or set it via lazyDir(). Nothing to do.")
       }
       message("Setting lazy directory via lazyDir(", lazyDir, ")")
-      lazyDir(lazyDir)
+      .setLazyDir(lazyDir, create=create)
     }
   }
 
@@ -1053,6 +1054,7 @@ lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
 
 #' @export
 saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compareRasterFileLength=1e6) {
+
   if(is.null(objName)) 
     objName <- deparse(substitute(obj))
   lazyDir <- checkLazyDir(lazyDir)
@@ -1098,7 +1100,7 @@ saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compare
     saveFilename <- slot(slot(obj, "file"), "name")
   }
   
-  saveToRepo(objName, repoDir = lazyDir,
+  saveToRepo(obj, repoDir = lazyDir,
              userTags = c(paste0("objectName:", objName), tags,
                           paste0("class:", is(obj)),
                           paste0("filename:", saveFilename)
@@ -1152,4 +1154,7 @@ if(FALSE ){
   system.time({loadFromLocalRepo(artifact) ;hist(a)})
   
   system.time({lazyLoadFromRepo(artifact, objName="b"); hist(b)})
+  
+  a %<% 1:10
+  
 }
