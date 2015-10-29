@@ -64,6 +64,7 @@ if (getRversion() >= "3.1.0") {
 #' @examples
 #' a <- rnorm(10)
 #' b <- rnorm(20)
+#' lazyDir(file.path(tempdir(),"lazyDir"), create=TRUE)
 #' lazySave(a, b)
 #' \dontrun{ # may be many objects
 #' lazySave(mget(ls(envir=.GlobalEnv)))
@@ -86,13 +87,6 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
     names(objList) <- objNames
 
   }
-  #objNames <- NULL
-
-
-#   if(is.null(lazyDir)) {
-#     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
-#     message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
-#   }
 
   if (!is.null(names(objList))) {
     if (length(names(objList)) == length(objList)) {
@@ -104,20 +98,9 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
   if (is.null(objNames)) {
     objNames <- sapply(as.list(substitute(list(...)))[-1L], deparse)
   }
-  #objList <- list(obj)
   names(objList) <- objNames
 
   lazyDir <- checkLazyDir(lazyDir, create=TRUE)
-#   if (!is.null(lazyDir())) {
-#     lazyDir <- lazyDir()
-#   }
-#
-#   if (is.null(lazyDir)) {
-#     lazyDir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
-#     message("Lazy directory is ", lazyDir, ". It will only persist for this R session")
-#   }
-#   checkPath(lazyDir, create = TRUE)
-  #dir.create(lazyDir, showWarnings = FALSE)
 
   if (!is.null(lazyDir)) {
     if (clearRepo) {
@@ -148,44 +131,8 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
         if (is(obj, "Raster")) {
             saveToRepoRaster(obj, objName=objName, lazyDir=lazyDir, 
                                        tags=tags, compareRasterFileLength=compareRasterFileLength)
-#           if (copyRasterFile & !inMemory(obj)) {
-#             curFilename <- normalizePath(filename(obj), winslash = "/")
-#             checkPath(file.path(lazyDir, "rasters"), create=TRUE)
-# 
-#             saveFilename <- file.path(lazyDir, "rasters", basename(curFilename)) %>%
-#               normalizePath(., winslash = "/", mustWork=FALSE)
-# 
-#             if (saveFilename!=curFilename) {
-#               shouldCopy <- TRUE
-#               if (file.exists(saveFilename)) {
-#                 if (!(compareRasterFileLength==Inf)) {
-#                   if (digest(file = saveFilename, length=compareRasterFileLength) ==
-#                       digest(file = curFilename, length=compareRasterFileLength)) {
-#                     shouldCopy <- FALSE
-#                   }
-#                 } else {
-#                   shouldCopy = TRUE
-#                 }
-#               }
-#               if (shouldCopy) {
-#                 pathExists <- file.exists(dirname(saveFilename))
-#                 if (!pathExists) dir.create(dirname(saveFilename))
-#                 file.copy(to = saveFilename, overwrite = TRUE,
-#                           recursive = FALSE, copy.mode = TRUE,
-#                           from = curFilename)
-#               }
-#               slot(slot(objList[[N]], "file"), "name") <- saveFilename
-#             }
-#           } else {
-#             saveFilename <- slot(slot(obj, "file"), "name")
-#           }
-#           saveToRepo(objName, repoDir = lazyDir,
-#                      userTags = c(paste0("objectName:", objName), tags,
-#                                   paste0("class:", is(obj)),
-#                                   paste0("filename:", saveFilename)
-#                                 ))
         } else {
-          saveToRepo(objName, repoDir = lazyDir,
+          saveToRepo(obj, repoDir = lazyDir,
                      userTags = c(paste0("objectName:", objName), tags,
                                   paste0("class:", is(obj))))
         }
@@ -199,8 +146,8 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
         }
 
       # Save the actual objects as lazy load databases
-        list2env(x = objList[N]) %>%
-          getFromNamespace("makeLazyLoadDB", "tools")(., file.path(lazyDir, "gallery", md5Hash))
+#         list2env(x = objList[N]) %>%
+#           getFromNamespace("makeLazyLoadDB", "tools")(., file.path(lazyDir, "gallery", md5Hash))
       }
     })
   }
@@ -402,9 +349,11 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
         filter(grepl("filename:", tag)) %>%
         select(tag)
 
-      # Test if it had a filename associated with it; if not, then load the rdx directly
+      # Test if it had a filename associated with it; if not, then load the rda directly
       if (nchar(gsub(rasterFile, pattern = "filename:", replacement = "")) == 0) {
-        lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
+        browser()
+        lazyLoadFromRepo(md5Hash, repoDir=lazyDir, objName=y, envir=envir)
+        #lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
       } else {
         
         rasterName <- gsub(rasterFile$tag, pattern="filename:", replacement = "")
@@ -1164,7 +1113,7 @@ lazyLoadFromRepo <- function(artifact, repoDir=lazyDir(), objName, envir=parent.
 }
 
 if(FALSE ){
-  devtools::load_all("C:/Eliot/GitHub/lazyR");
+  devtools::load_all("~/Documents/GitHub/lazyR");
   exampleRepoDir <- tempdir()
   lazyDir(exampleRepoDir, create=TRUE)
   deleteRepo( exampleRepoDir )
@@ -1172,7 +1121,15 @@ if(FALSE ){
   
   
   showLocalRepo(method="md5hashes")
-  a <- 1:1e7
+  a <- 1:1e2
+  lazySave(a)
+  lazyLs("b", exact=TRUE)
+  lazyExists("a")
+  rm(a)
+  lazyLoad2("a")
+  
+  
+  lazyObjectName()
   artifact=saveToRepo( a, repoDir=exampleRepoDir )
   showLocalRepo(method="md5hashes")
   
