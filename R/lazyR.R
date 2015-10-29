@@ -324,6 +324,7 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
   if(!is.null(md5Hashes)) {
     objNames <- md5Hashes
   }
+  
   if (is.null(objNames) & is.null(md5Hashes)) {
     objNames <- unique(lazyLs(lazyDir = lazyDir))
   }
@@ -336,10 +337,11 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
   oldFilePaths <- character()
   
   lapply(objNames, function(y) {
+    
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
-                          exact=TRUE)
+                          exact=TRUE) %>% unique
       } else {
         md5Hash <- y
       }
@@ -347,12 +349,12 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
       rasterFile <- showLocalRepo(repoDir=lazyDir, method="tags") %>%
         filter(artifact==md5Hash) %>%
         filter(grepl("filename:", tag)) %>%
-        select(tag)
-
+        select(tag) %>%
+        unique
+      
       # Test if it had a filename associated with it; if not, then load the rda directly
       if (nchar(gsub(rasterFile, pattern = "filename:", replacement = "")) == 0) {
         lazyLoadFromRepo(md5Hash, repoDir=lazyDir, objName=y, envir=envir)
-        #lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
       } else {
         
         rasterName <- gsub(rasterFile$tag, pattern="filename:", replacement = "")
@@ -376,7 +378,7 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag = y, archivistCol = "artifact",
                           lazyDir = lazyDir, exact = TRUE)
-        md5Hash <- showLocalRepo(method="md5hashes")$md5hash
+        md5Hash <- showLocalRepo(method="md5hashes", repoDir = lazyDir)$md5hash
         md5Hash <- md5Hash[length(md5Hash)]
         
       } else {
@@ -832,7 +834,7 @@ checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
 #' lazySave(obj1, r, ras, obj2, lazyDir=oldLazyDir, overwrite=TRUE)
 #' 
 #' # copy to new lazyDir location
-#' copyLazyDir(oldLazyDir, newLazyDir)
+#' copyLazyDir(oldLazyDir, newLazyDir, create=TRUE)
 #' 
 #' # remove the objects in memory and the old lazyLoad db
 #' rm(obj1, obj2, r, ras)
@@ -957,7 +959,6 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
      if(is.null(y$env)) y$env <- envir
    }
 
-  #inputs <- match.call(definition=match.fun(def), call = y$expr)[-1]
   if(length(y$expr)==1) { # This is for an object passing
     inputs <- y$expr
   } else {
@@ -971,17 +972,20 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
   digestCall <- digest(append(sapply(inputs, function(h1) eval(h1)),objName)) # includes object name, x
   
   localTags <- showLocalRepo(lazyDir, "tags")
+
   isInRepo <- localTags[localTags$tag == paste0("cacheId:", digestCall), , drop = FALSE]
 
   if (nrow(isInRepo) > 0) {
     lastEntry <- max(isInRepo$createdDate)
     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
       lastOne <- order(isInRepo$createdDate, decreasing = TRUE)[1]
+      objNameInRepo <- lazyLs(digestCall, lazyDir=lazyDir)
+      if(length(objNameInRepo)>1) objNameInRepo <- objNameInRepo[objNameInRepo %in% objName]
       if(exists(objName, envir=envir)) rm(list = objName, envir=envir)
-      lazyLoad2(lazyLs(digestCall), envir = environment())
-      delayedAssign(x = objName, value = get(lazyLs(digestCall), envir=environment()), 
-                    eval.env = environment(), assign.env = envir)
-      return(invisible())
+        lazyLoad2(objNameInRepo, envir = environment())
+        delayedAssign(x = objName, value = get(lazyLs(digestCall), envir=environment()), 
+                      eval.env = environment(), assign.env = envir)
+        return(invisible())
     }
   }
 
@@ -1156,5 +1160,29 @@ if(FALSE ){
   system.time({lazyLoadFromRepo(artifact, objName="b"); hist(b)})
   
   a %<% 1:10
+  r %<% raster::raster(matrix(1:9e4, ncol=3e2))
+  r1 %<% raster::raster(matrix(1:9, ncol=3))
+
+  lazyDir(oldLazyDir)
+  #' # make some objects
+  obj1 <- 1:10
+  obj2 <- 11:20
+  r %<% raster::raster(matrix(1:9e4, ncol=3e2))
+  ras %<% raster::raster(matrix(1:9e4, ncol=3e2))
   
-}
+  raster::writeRaster(r, file.path(tempdir(),"r.tif"), overwrite=TRUE)
+  raster::writeRaster(r, file.path(tempdir(),"ras.tif"), overwrite=TRUE)
+  rm(r, ras)
+  r %<% raster::raster(file.path(tempdir(),"r.tif"))
+  ras %<% raster::raster(file.path(tempdir(),"ras.tif"))
+  copyLazyDir(oldLazyDir, newLazyDir)
+  
+  rm(r, ras)
+  unlink(oldLazyDir)
+    
+  r %<% raster::raster(file.path(tempdir(),"r.tif"))
+  ras %<% raster::raster(file.path(tempdir(),"ras.tif"))
+  library(SpaDES)
+  Plot(r, ras, new=T)
+  
+r}
