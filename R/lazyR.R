@@ -428,10 +428,15 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag = y, archivistCol = "artifact",
                           lazyDir = lazyDir, exact = TRUE)
+        md5Hash <- showLocalRepo(method="md5hashes")$md5hash
+        md5Hash <- md5Hash[length(md5Hash)]
+        
       } else {
         md5Hash <- y
       }
-      lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
+      
+      lazyLoadFromRepo(md5Hash, repoDir=lazyDir, objName=y, envir=envir)
+      #lazyLoad(file.path(lazyDir, "gallery", md5Hash), envir = envir)
 
       obsRead <<- c(obsRead,  y)
     }
@@ -1151,3 +1156,43 @@ saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compare
              ))
 }
 
+
+#' @export
+lazyLoadFromRepo <- function(artifact, repoDir=lazyDir(), objName, envir=parent.frame(1)) {
+  loadedObj <- lazy(loadFromLocalRepo(artifact, repoDir, value=TRUE))
+  delayedAssign(objName, value = lazy_eval(loadedObj), assign.env = envir)
+}
+
+if(FALSE ){
+  devtools::load_all("C:/Eliot/GitHub/lazyR");
+  exampleRepoDir <- tempdir()
+  lazyDir(exampleRepoDir, create=TRUE)
+  deleteRepo( exampleRepoDir )
+  createEmptyRepo( repoDir = exampleRepoDir )
+  
+  
+  showLocalRepo(method="md5hashes")
+  a <- 1:1e7
+  artifact=saveToRepo( a, repoDir=exampleRepoDir )
+  showLocalRepo(method="md5hashes")
+  
+  rm(a)
+  rm(b)
+  #  system.time(lazyLoadFromRepo(artifact, objName="b") )
+  #  system.time()
+  
+  system.time({loadFromLocalRepo(artifact)})
+  system.time({lazyLoadFromRepo(artifact, objName="b")})
+  
+  # Plotting speed
+  system.time({hist(a)})
+  system.time({hist(b)})
+  rm(a)
+  rm(b)
+  system.time({lazyLoad2("a"); hist(a)})
+  rm(a)
+  
+  system.time({loadFromLocalRepo(artifact) ;hist(a)})
+  
+  system.time({lazyLoadFromRepo(artifact, objName="b"); hist(b)})
+}
