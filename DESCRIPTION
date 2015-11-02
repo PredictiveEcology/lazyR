@@ -1,14 +1,20 @@
 Package: lazyR
-Title: Create lazyLoad databases for R objects
-Version: 0.0.7
-Date: 2015-10-29
+Title: Create Lazy Load Databases for R Objects
+Version: 0.0.8
+Date: 2015-11-02
 Authors@R: c(
   person(c("Eliot", "J", "B"), "McIntire", email="eliotmcintire@gmail.com",
   role = c("aut", "cre")),
   person(c("Alex", "M"), "Chubaty", email="alexander.chubaty@canada.ca",
   role=c("ctb"))
   )
-Description: Uses archivist package, but add lazy loading.  Objects loaded with lazyLoad2() are loaded in the workspace, but will not be loaded into RAM until they are used. This has several use cases: an entire database can be loaded into the .GlobalEnv quickly, giving access to these objects for function calls, without the hitting memory limitations. Has specific mechanisms for file-based objects, like Raster* objects.
+Description: Uses archivist package, but add lazy loading.
+    Objects loaded with lazyLoad2() are loaded in the workspace,
+    but will not be loaded into RAM until they are used.
+    This has several use cases: an entire database can be loaded
+    into the .GlobalEnv quickly, giving access to these objects
+    for function calls, without the hitting memory limitations.
+    Has specific mechanisms for file-based objects, like Raster* objects.
 Depends:
     R (>= 3.2.2),
     archivist
@@ -28,5 +34,5 @@ ByteCompile: yes
 Collate:
     'lazyR-package.R'
     'lazyR.R'
-    
-    
+
+
