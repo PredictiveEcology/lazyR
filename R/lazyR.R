@@ -774,26 +774,16 @@ checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
 # }
 
 
-#' Copy a lazyDir and all the files in it
+#' Copy a directory using Robocopy on Windows and rsync on linux
 #'
-#' This will copy an entire lazyDir to a new location. This can be useful
+#' This will copy an entire directory using the faster copy options in Windows and Linux. 
+#' The function will default to \code{file.copy} (which is slow). For lazyR databases, 
+#' this can be useful
 #' for copying everything to a new computer, a network location etc.
 #'
-#' @note This function is essential to use, instead of just using the operating
-#' system copying directly, when \code{Raster*} objects are involved.
-#' \code{Raster*} objects have a file location as a backbone for the R object.
-#' This must not only be copied to the new location, but also the filename referenced
-#' within the \code{Raster} object must be updated to the new location.
-#' Because \code{Raster*} objects encode absolute paths, the original
-#' file must be visible before copying to the new path.
+#' @param fromDir The source lazyDir
 #'
-#' Because absolute paths are stored within R objects, like \code{Raster*}
-#' objects, a network location may create undesired breakages unless
-#' all machines have the same mapping to that network location.
-#'
-#' @param oldLazyDir The source lazyDir
-#'
-#' @param newLazyDir The new lazyDir
+#' @param toDir The new lazyDir
 #' 
 #' @param useRobocopy For Windows, this will use a system call to Robocopy which appears to be much 
 #' faster than the internal \code{file.copy} function. Uses /MIR flag.
@@ -809,8 +799,7 @@ checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
 #'
 #' @docType methods
 #' @author Eliot McIntire
-#' @rdname copyLazyDir
-#' @importFrom archivist createEmptyRepo
+#' @rdname copyDir
 #' @export
 #' @examples
 #' \dontrun{
@@ -827,55 +816,128 @@ checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
 #' ras <- raster::raster(file.path(tempdir(),"ras.tif"))
 #' 
 #' # identify a new and old lazyLoad db
-#' oldLazyDir <- file.path(tempdir(), "old")
-#' newLazyDir <- file.path(tempdir(), "new")
-#' lazySave(obj1, r, ras, obj2, lazyDir=oldLazyDir, overwrite=TRUE)
+#' fromDir <- file.path(tempdir(), "old")
+#' toDir <- file.path(tempdir(), "new")
+#' lazySave(obj1, r, ras, obj2, lazyDir=fromDir, overwrite=TRUE)
 #' 
 #' # copy to new lazyDir location
-#' copyLazyDir(oldLazyDir, newLazyDir, create=TRUE)
+#' copyDir(fromDir, toDir, create=TRUE)
 #' 
 #' # remove the objects in memory and the old lazyLoad db
 #' rm(obj1, obj2, r, ras)
-#' unlink(oldLazyDir, recursive=TRUE)
+#' unlink(fromDir, recursive=TRUE)
 #' 
-#' lazyLoad2(lazyDir=newLazyDir) # Objects should be visible after this
+#' lazyLoad2(lazyDir=toDir) # Objects should be visible after this
 #' ls()
-#' unlink(newLazyDir, recursive=TRUE)
+#' unlink(toDir, recursive=TRUE)
 #' }
-copyLazyDir <- function(oldLazyDir=NULL, newLazyDir=NULL, useRobocopy=TRUE, 
+copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE, 
                         overwrite=TRUE, delDestination=FALSE, 
                         #copyRasterFile=TRUE, clearRepo=TRUE,
                         create=TRUE, silent=FALSE) {
 
   origDir <- getwd()
-  oldLazyDir <- checkLazyDir(oldLazyDir)
-  newLazyDir <- checkLazyDir(newLazyDir, create=create)
-  setwd(oldLazyDir)
+  #fromDir <- checkLazyDir(fromDir)
+  #toDir <- checkLazyDir(toDir, create=create)
+  setwd(fromDir)
 
   os <- tolower(Sys.info()[["sysname"]])
   if(os=="windows") {
     if(useRobocopy) {
+      browser()
       if(silent){
-        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(oldLazyDir, winslash = "\\"), 
-                      "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
+        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(fromDir, winslash = "\\"), 
+                      "\\ ", normalizePath(toDir, winslash = "\\")))
       } else {
-        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(oldLazyDir, winslash = "\\"), 
-                      "\\ ", normalizePath(newLazyDir, winslash = "\\"), "\\"))
+        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"), 
+                      "\\ ", normalizePath(toDir, winslash = "\\")))
+#         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"), 
+#                       "\\ ", normalizePath(toDir, winslash = "\\"), "\\"))
       }
     } else {
-      file.copy(from = dir(oldLazyDir), to = newLazyDir, 
+      file.copy(from = dir(fromDir), to = toDir, 
                 overwrite = overwrite, recursive=TRUE)  
     }
   } else if(os=="linux" | os == "darwin") {
     if(silent){
-      system(paste0("rsync -aP ","--delete "[delDestination], oldLazyDir, "/ ", newLazyDir))
+      system(paste0("rsync -aP ","--delete "[delDestination], fromDir, "/ ", toDir))
     } else {
-      system(paste0("rsync -avP ","--delete "[delDestination], oldLazyDir, "/ ", newLazyDir))
+      system(paste0("rsync -avP ","--delete "[delDestination], fromDir, "/ ", toDir))
     }
   }
   setwd(origDir)
-  return(invisible(newLazyDir))  
+  return(invisible(toDir))  
 }
+
+#' Copy a file using Robocopy on Windows and rsync on linux
+#'
+#' This will copy an individual file faster Robocopy in Windows and rsync in Linux. 
+#' The function will default to \code{file.copy} (which is slow). 
+#'
+#' @param from The source file
+#'
+#' @param to The new file
+#' 
+#' @param useRobocopy For Windows, this will use a system call to Robocopy which appears to be much 
+#' faster than the internal \code{file.copy} function. Uses /MIR flag.
+#'
+#' @param overwrite Passed to \code{file.copy}
+#' 
+#' @param delDestination Logical, whether the destination should have any files deleted, if they don't exist 
+#' in the source. This is /purge
+#'
+#' @param create Passed to \code{checkLazyDir}
+#'
+#' @param silent Should a progress be printed
+#'
+#' @docType methods
+#' @author Eliot McIntire
+#' @rdname copyDir
+#' @export
+#' @examples
+#' \dontrun{
+#' }
+copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE, 
+                     overwrite=TRUE, delDestination=FALSE, 
+                     #copyRasterFile=TRUE, clearRepo=TRUE,
+                     create=TRUE, silent=FALSE) {
+
+  
+  origDir <- getwd()
+  #fromDir <- checkLazyDir(fromDir)
+  #toDir <- checkLazyDir(toDir, create=create)
+  
+  os <- tolower(Sys.info()[["sysname"]])
+  if(os=="windows") {
+    if(useRobocopy) {
+      if(silent){
+        system(paste0("robocopy ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", 
+                      normalizePath(dirname(from), winslash = "\\"), 
+                      "\\ ", normalizePath(dirname(to), winslash = "\\"),
+                      " ", basename(from)))
+      } else {
+        system(paste0("robocopy ","/purge"[delDestination]," /ETA ", normalizePath(dirname(from), winslash = "\\"), 
+                      "\\ ", normalizePath(dirname(to), winslash = "\\"),
+                      " ", basename(from)))
+        #         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"), 
+        #                       "\\ ", normalizePath(toDir, winslash = "\\"), "\\"))
+      }
+    } else {
+      file.copy(from = dir(from), to = toDir, 
+                overwrite = overwrite, recursive=TRUE)  
+    }
+  } else if(os=="linux" | os == "darwin") {
+    if(silent){
+      system(paste0("rsync -aP ","--delete "[delDestination], from, " ", dirname(to),"/"))
+    } else {
+      system(paste0("rsync -avP ","--delete "[delDestination], from, " ", dirname(to), "/"))
+    }
+  }
+  setwd(origDir)
+  return(invisible(to))  
+}
+
+
 
 ################################################################################
 #' Lazy cache assignment operator
