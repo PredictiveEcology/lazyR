@@ -34,5 +34,4 @@ ByteCompile: yes
 Collate:
     'lazyR-package.R'
     'lazyR.R'
-
-
+RoxygenNote: 5.0.0
