@@ -1040,7 +1040,7 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
   evaluated<-lapply(inputs, function(h1) {
     tryCatch(eval(h1, envir=envir), error=function(h2) {
       lapply(h1, function(h3) {
-        tryCatch(eval(h3=envir), error=function(h3) deparse(h3))
+        tryCatch(eval(h3, envir=envir), error=function(h3) deparse(h3))
       })
     })
   })
