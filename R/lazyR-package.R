@@ -60,6 +60,6 @@
 #' @section 6 Copy entire lazyR and all files to a new location:
 #'
 #' \tabular{ll}{
-#'   \code{\link{copyLazyDir}} \tab Copy all files to new lazyR database location\cr
+#'   \code{\link{copyDir}} \tab Copy all files to new lazyR database location\cr
 #' }
 NULL

@@ -3,36 +3,16 @@
 \docType{methods}
 \name{copyDir}
 \alias{copyDir}
-\alias{copyFile}
 \title{Copy a directory using Robocopy on Windows and rsync on linux}
 \usage{
 copyDir(fromDir = NULL, toDir = NULL, useRobocopy = TRUE,
   overwrite = TRUE, delDestination = FALSE, create = TRUE,
   silent = FALSE)
-
-copyFile(from = NULL, to = NULL, useRobocopy = TRUE, overwrite = TRUE,
-  delDestination = FALSE, create = TRUE, silent = FALSE)
 }
 \arguments{
 \item{fromDir}{The source lazyDir}
 
 \item{toDir}{The new lazyDir}
-
-\item{useRobocopy}{For Windows, this will use a system call to Robocopy which appears to be much
-faster than the internal \code{file.copy} function. Uses /MIR flag.}
-
-\item{overwrite}{Passed to \code{file.copy}}
-
-\item{delDestination}{Logical, whether the destination should have any files deleted, if they don't exist
-in the source. This is /purge}
-
-\item{create}{Passed to \code{checkLazyDir}}
-
-\item{silent}{Should a progress be printed}
-
-\item{from}{The source file}
-
-\item{to}{The new file}
 
 \item{useRobocopy}{For Windows, this will use a system call to Robocopy which appears to be much
 faster than the internal \code{file.copy} function. Uses /MIR flag.}
@@ -51,9 +31,6 @@ This will copy an entire directory using the faster copy options in Windows and 
 The function will default to \code{file.copy} (which is slow). For lazyR databases,
 this can be useful
 for copying everything to a new computer, a network location etc.
-
-This will copy an individual file faster Robocopy in Windows and rsync in Linux.
-The function will default to \code{file.copy} (which is slow).
 }
 \examples{
 \dontrun{
@@ -85,12 +62,8 @@ lazyLoad2(lazyDir=toDir) # Objects should be visible after this
 ls()
 unlink(toDir, recursive=TRUE)
 }
-\dontrun{
-}
 }
 \author{
-Eliot McIntire
-
 Eliot McIntire
 }
 
