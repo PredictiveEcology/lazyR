@@ -5,7 +5,7 @@
 \alias{checkLazyDir}
 \title{Checks and sets for lazyDir}
 \usage{
-checkLazyDir(lazyDir = NULL, create = FALSE)
+checkLazyDir(lazyDir = NULL, create = TRUE)
 }
 \arguments{
 \item{lazyDir}{Character string of directory to be used for the lazy databases.}

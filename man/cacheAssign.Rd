@@ -7,7 +7,7 @@
 \title{Lazy cache assignment operator}
 \usage{
 assignCache(x, y, lazyDir = NULL, notOlderThan = NULL,
-  substituteEnv = environment())
+  envir = as.environment(-1))
 
 x \%<\% y
 }
@@ -20,7 +20,7 @@ x \%<\% y
 
 \item{notOlderThan}{see \code{\link[archivist]{cache}}}
 
-\item{substituteEnv}{The environment to be passed to substitute internally.
+\item{envir}{The environment to be passed to substitute internally.
 This may help with programming control.}
 }
 \value{
@@ -69,7 +69,7 @@ system.time(a\%<\%seq(1,1e6))
 system.time(a\%<\%seq(1,1e6))
 
 # Third time - but force re-evaluation
-system.time(assignCache(a, seq(1,1e6), notOlderThan = Sys.time()))
+system.time(assignCache("a", seq(1,1e6), notOlderThan = Sys.time()))
 
 # For comparison, normal assignment may be faster if it is a fast function in R
 system.time(a<-seq(1,1e6))

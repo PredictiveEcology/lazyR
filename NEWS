@@ -1,5 +1,10 @@
 Known issues: https://github.com/PredictiveEcology/lazyR/issues
 
+version 0.0.7
+=============
+* uses delayedAssign instead of makeLazyLoadDB, meaning the archivist package mechanism that saves rda files is sufficient.
+* all conversions from old mechanism (with tools:::makeLazyLoadDB) to new mechanism (with delayedAssign) all implemented
+
 version 0.0.2
 =============
 * initial release of lazyR

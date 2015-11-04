@@ -5,10 +5,10 @@
 \alias{lazyExists}
 \title{Does an object exist in the lazyDir}
 \usage{
-lazyExists(objName, lazyDir = NULL, exact = TRUE)
+lazyExists(objNames, lazyDir = NULL, exact = TRUE)
 }
 \arguments{
-\item{objName}{A character string indicating the object name}
+\item{objNames}{A character vector indicating the object names to test}
 
 \item{lazyDir}{the lazyDir to use}
 

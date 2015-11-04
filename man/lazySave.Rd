@@ -35,7 +35,7 @@ invisibly returns a character vector of objects saved.
 \description{
 This function creates an archivist repository that holds metadata ("tags")
 associated with the object. Unlike the \code{archivist} package, the objects
-themselves are saved as lazy load databases (i.e., via tools:::makeLazyLoadDB).
+themselves are saved as lazy load databases (i.e., via \code{tools:::makeLazyLoadDB)}.
 Each object is saved into its own lazy load database, with a filename that
 matches the object name. Because it is also an archivist repository, lazy
 loading of objects can be done via tags, classes etc..
@@ -61,6 +61,7 @@ truly exact comparisons behaviour is needed.
 \examples{
 a <- rnorm(10)
 b <- rnorm(20)
+lazyDir(file.path(tempdir(),"lazyDir"), create=TRUE)
 lazySave(a, b)
 \dontrun{ # may be many objects
 lazySave(mget(ls(envir=.GlobalEnv)))
