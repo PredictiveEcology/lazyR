@@ -1,7 +1,7 @@
 Package: lazyR
 Title: Create Lazy Load Databases for R Objects
-Version: 0.0.8
-Date: 2015-11-02
+Version: 0.0.9
+Date: 2015-11-04
 Authors@R: c(
   person(c("Eliot", "J", "B"), "McIntire", email="eliotmcintire@gmail.com",
   role = c("aut", "cre")),
@@ -17,7 +17,7 @@ Description: Uses archivist package, but add lazy loading.
     Has specific mechanisms for file-based objects, like Raster* objects.
 Depends:
     R (>= 3.2.2),
-    archivist
+    archivist (>= 1.8)
 Suggests:
     knitr,
     testthat
