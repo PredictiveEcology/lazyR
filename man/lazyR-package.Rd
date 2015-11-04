@@ -60,7 +60,7 @@ Bug reports: \url{https://github.com/PredictiveEcology/lazyR/issues}
 
 
 \tabular{ll}{
-  \code{\link{copyLazyDir}} \tab Copy all files to new lazyR database location\cr
+  \code{\link{copyDir}} \tab Copy all files to new lazyR database location\cr
 }
 }
 \author{

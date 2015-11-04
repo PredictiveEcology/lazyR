@@ -75,7 +75,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
                      compareRasterFileLength=1e6) {
 
   objList <- list(...)
-
+  
   if (is(objList[[1]], "list")) {
     objList <- objList[[1]]
   }
@@ -128,21 +128,27 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
         }
       }
       if (shouldSave) {
-        if (is(obj, "Raster")) {
-            saveToRepoRaster(obj, objName=objName, lazyDir=lazyDir,
-                                       tags=tags, compareRasterFileLength=compareRasterFileLength)
+        md5Hash <- digest(obj)
+        if(any(showLocalRepo(method = "md5hashes", repoDir = lazyDir)$md5hash==md5Hash)) {
+#          rmFromRepo(md5Hash)
+          addTagsRepo(md5Hash, repoDir = lazyDir, tags = paste0("objectName:", objName))
+          #message("Resaving ",md5Hash," with new name, ",objName," in repository")
         } else {
-          saveToRepo(obj, repoDir = lazyDir,
-                     userTags = c(paste0("objectName:", objName), tags,
-                                  paste0("class:", is(obj))))
-        }
-
-        md5Hash <- lazyLs(tag=objName, archivistCol = "artifact",
-                          lazyDir = lazyDir, exact = TRUE)
-
-        # Add tags by class
-        if (is(obj, "spatialObjects")) {
-          addTagsRepo(md5Hash, tags=paste0("crs:", crs(obj)), repoDir = lazyDir)
+          if (is(obj, "Raster")) {
+              saveToRepoRaster(obj, objName=objName, lazyDir=lazyDir,
+                                         tags=tags, compareRasterFileLength=compareRasterFileLength)
+          } else {
+            saveToRepo(obj, repoDir = lazyDir,
+                       userTags = c(paste0("objectName:", objName), tags,
+                                    paste0("class:", is(obj))))
+          }
+#        md5Hash <- lazyLs(tag=objName, archivistCol = "artifact",
+#                          lazyDir = lazyDir, exact = TRUE) %>% unique
+        
+          # Add tags by class
+          if (is(obj, "spatialObjects")) {
+            addTagsRepo(md5Hash, tags=paste0("crs:", crs(obj)), repoDir = lazyDir)
+          }
         }
 
       # Save the actual objects as lazy load databases
@@ -337,7 +343,8 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
   oldFilePaths <- character()
 
   lapply(objNames, function(y) {
-
+#    browser()
+    
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
@@ -378,8 +385,8 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag = y, archivistCol = "artifact",
                           lazyDir = lazyDir, exact = TRUE)
-        md5Hash <- showLocalRepo(method="md5hashes", repoDir = lazyDir)$md5hash
-        md5Hash <- md5Hash[length(md5Hash)]
+        #md5Hash <- showLocalRepo(method="md5hashes", repoDir = lazyDir)$md5hash
+        #md5Hash <- md5Hash[length(md5Hash)]
 
       } else {
         md5Hash <- y
@@ -451,15 +458,16 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
     if (length(z)>0) {
       for (toRm in z) {
         objName <- lazyObjectName(toRm, lazyDir=lazyDir)
-
-        if (lazyIs(objName, "Raster", lazyDir = lazyDir) & removeRasterFile) {
-          tmpEnv <- new.env()
-          lazyLoad2(objName, envir = tmpEnv)
-          file.remove(filename(tmpEnv[[objName]]))
+        for(oN in objName) {
+          if (lazyIs(oN, "Raster", lazyDir = lazyDir) & removeRasterFile) {
+            tmpEnv <- new.env()
+            lazyLoad2(oN, envir = tmpEnv)
+            file.remove(filename(tmpEnv[[objName]]))
+          }
+  
+          rmFromRepo(toRm, repoDir = lazyDir)
+          message(paste("Object removed:", objName))
         }
-
-        rmFromRepo(toRm, repoDir = lazyDir)
-        message(paste("Object removed:", objName))
       }
     } else {
       message(y, " not in lazy load db. Nothing removed.")
@@ -595,8 +603,8 @@ lazyObjectName <- function(md5Hash, lazyDir=NULL) {
   lazyObjectName <- showLocalRepo(method="tags", repoDir = lazyDir) %>%
     filter(artifact==md5Hash) %>%
     filter(grepl(pattern="objectName:", tag)) %>%
-    select_("tag") %>%
-    gsub(.$tag, pattern="objectName:", replacement="")
+    select_("tag") 
+  lazyObjectName <- gsub(lazyObjectName$tag, pattern="objectName:", replacement="")
   return(lazyObjectName)
 
 }
@@ -844,7 +852,6 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
   os <- tolower(Sys.info()[["sysname"]])
   if(os=="windows") {
     if(useRobocopy) {
-      browser()
       if(silent){
         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(fromDir, winslash = "\\"), 
                       "\\ ", normalizePath(toDir, winslash = "\\")))
@@ -892,7 +899,7 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
 #'
 #' @docType methods
 #' @author Eliot McIntire
-#' @rdname copyDir
+#' @rdname copyFile
 #' @export
 #' @examples
 #' \dontrun{
@@ -906,30 +913,30 @@ copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE,
   origDir <- getwd()
   #fromDir <- checkLazyDir(fromDir)
   #toDir <- checkLazyDir(toDir, create=create)
-  
+  if(!dir.exists(to)) to <- dirname(to) # extract just the directory part
   os <- tolower(Sys.info()[["sysname"]])
   if(os=="windows") {
     if(useRobocopy) {
       if(silent){
         system(paste0("robocopy ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", 
                       normalizePath(dirname(from), winslash = "\\"), 
-                      "\\ ", normalizePath(dirname(to), winslash = "\\"),
+                      "\\ ", normalizePath(to, winslash = "\\"),
                       " ", basename(from)))
       } else {
         system(paste0("robocopy ","/purge"[delDestination]," /ETA ", normalizePath(dirname(from), winslash = "\\"), 
-                      "\\ ", normalizePath(dirname(to), winslash = "\\"),
+                      "\\ ", normalizePath(to, winslash = "\\"),
                       " ", basename(from)))
         #         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"), 
         #                       "\\ ", normalizePath(toDir, winslash = "\\"), "\\"))
       }
     } else {
-      file.copy(from = dir(from), to = toDir, 
+      file.copy(from = from, to = to, overwrite=overwrite, recursive = FALSE)
     }
   } else if(os=="linux" | os == "darwin") {
     if(silent){
-      system(paste0("rsync -aP ","--delete "[delDestination], from, " ", dirname(to),"/"))
+      system(paste0("rsync -aP ","--delete "[delDestination], from, " ", to,"/"))
     } else {
-      system(paste0("rsync -avP ","--delete "[delDestination], from, " ", dirname(to), "/"))
+      system(paste0("rsync -avP ","--delete "[delDestination], from, " ", to, "/"))
     }
   }
   setwd(origDir)
@@ -1014,6 +1021,7 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
   if(!is.character(x)) stop("x must be a character")
 
   y <- lazy(y)
+  x <- force(x)
   lazyDir <- checkLazyDir(lazyDir = lazyDir)
    if(is.null(y$expr)) {
      y <- lazy(y)
@@ -1029,12 +1037,22 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
       inputs <- match.call(call = y$expr)[-1]
   }
 
-  digestCall <- digest(append(sapply(inputs, function(h1) eval(h1)),x)) # includes object name, x
+  evaluated<-lapply(inputs, function(h1) {
+    tryCatch(eval(h1, envir=envir), error=function(h2) {
+      lapply(h1, function(h3) {
+        tryCatch(eval(h3=envir), error=function(h3) deparse(h3))
+      })
+    })
+  })
+  
+  digestCall <- digest(evaluated)
+        #h1)}),x)) # includes object name, x
 
   localTags <- showLocalRepo(lazyDir, "tags")
 
   isInRepo <- localTags[localTags$tag == paste0("cacheId:", digestCall), , drop = FALSE]
 
+#  browser()
   if (nrow(isInRepo) > 0) {
     lastEntry <- max(isInRepo$createdDate)
     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
@@ -1042,9 +1060,9 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
       objNameInRepo <- lazyLs(digestCall, lazyDir=lazyDir)
       if(length(objNameInRepo)>1) objNameInRepo <- objNameInRepo[objNameInRepo %in% x]
       if(exists(x, envir=envir)) rm(list = x, envir=envir)
-        lazyLoad2(objNameInRepo, envir = environment())
-        delayedAssign(x = x, value = get(lazyLs(digestCall), envir=environment()),
-                      eval.env = environment(), assign.env = envir)
+        lazyLoad2(objNameInRepo, envir = envir)
+#        delayedAssign(x = x, value = get(lazyLs(digestCall), envir=environment()),
+#                      eval.env = environment(), assign.env = envir)
         return(invisible())
     }
   }
@@ -1052,7 +1070,8 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
   output <- lazy_eval(y)
   lazySave(output, lazyDir=lazyDir, objNames = x, tags=paste0("cacheId:", digestCall),
            overwrite=TRUE)
-  delayedAssign(x = x, value = output, eval.env = environment(), assign.env = envir)
+  delayedAssign(x = x, value = output, eval.env = environment(), 
+                assign.env = envir)
 }
 
 #' @rdname cacheAssign
@@ -1171,18 +1190,18 @@ saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compare
         pathExists <- file.exists(dirname(saveFilename))
         if (!pathExists) dir.create(dirname(saveFilename))
         if(saveFilename %>% grepl(., pattern=".grd$")) {
-          file.copy(to = saveFilename, overwrite = TRUE,
-                    recursive = FALSE, copy.mode = TRUE,
+          copyFile(to = saveFilename, overwrite = TRUE,
                     from = curFilename)
           griFilename <- sub(saveFilename, pattern=".grd$", replacement = ".gri")
           curGriFilename <- sub(curFilename, pattern=".grd$", replacement = ".gri")
-          file.copy(to = griFilename, overwrite = TRUE,
-                    recursive = FALSE, copy.mode = TRUE,
-                    from = curGriFilename)
+          copyFile(to = griFilename, overwrite = TRUE,
+                   from = curGriFilename)
+#           file.copy(to = griFilename, overwrite = TRUE,
+#                     recursive = FALSE, copy.mode = TRUE,
+#                     from = curGriFilename)
         } else {
-          file.copy(to = saveFilename, overwrite = TRUE,
-                  recursive = FALSE, copy.mode = TRUE,
-                  from = curFilename)
+          copyFile(to = saveFilename, overwrite = TRUE,
+                   from = curFilename)
         }
       }
       slot(slot(obj, "file"), "name") <- saveFilename
@@ -1222,7 +1241,8 @@ saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compare
 #' @rdname lazyLoadFromRepo
 #' @export
 lazyLoadFromRepo <- function(artifact, lazyDir=lazyDir(), objName, envir=parent.frame(1)) {
-  loadedObj <- lazy(loadFromLocalRepo(artifact, lazyDir, value=TRUE))
+#  browser()
+  loadedObj <- lazy(loadFromLocalRepo(force(artifact), lazyDir, value=TRUE))
   delayedAssign(objName, value = lazy_eval(loadedObj), assign.env = envir)
 }
 

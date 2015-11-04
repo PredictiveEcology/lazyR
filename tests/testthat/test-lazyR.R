@@ -8,6 +8,7 @@ test_that("lazy loading mechanisms don't work", {
   exampleRepoDir <- file.path(tempdir(), "lazyDir") %>%
     normalizePath(., winslash = "/", mustWork = FALSE)
   lazyDir <- lazyDir(exampleRepoDir, create=TRUE)
+  
   expect_equal(exampleRepoDir, lazyDir)
 
   deleteRepo( exampleRepoDir )
@@ -49,7 +50,12 @@ test_that("lazy loading mechanisms don't work", {
   }
   expect_message(a %<% 1:10, "1 objects loaded of 1")
 
-  # Test raster mechanisms
+
+})
+
+test_that("Test raster mechanisms", {
+    # Test raster mechanisms
+  env <- environment()
   expect_message(lazyRm("r"), "r not in lazy load db. Nothing removed")
 
   # no file backing
