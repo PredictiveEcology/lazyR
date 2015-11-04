@@ -75,7 +75,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
                      compareRasterFileLength=1e6) {
 
   objList <- list(...)
-  
+
   if (is(objList[[1]], "list")) {
     objList <- objList[[1]]
   }
@@ -144,7 +144,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
           }
 #        md5Hash <- lazyLs(tag=objName, archivistCol = "artifact",
 #                          lazyDir = lazyDir, exact = TRUE) %>% unique
-        
+
           # Add tags by class
           if (is(obj, "spatialObjects")) {
             addTagsRepo(md5Hash, tags=paste0("crs:", crs(obj)), repoDir = lazyDir)
@@ -344,7 +344,7 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
 
   lapply(objNames, function(y) {
 #    browser()
-    
+
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
@@ -464,7 +464,7 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
             lazyLoad2(oN, envir = tmpEnv)
             file.remove(filename(tmpEnv[[objName]]))
           }
-  
+
           rmFromRepo(toRm, repoDir = lazyDir)
           message(paste("Object removed:", objName))
         }
@@ -603,7 +603,7 @@ lazyObjectName <- function(md5Hash, lazyDir=NULL) {
   lazyObjectName <- showLocalRepo(method="tags", repoDir = lazyDir) %>%
     filter(artifact==md5Hash) %>%
     filter(grepl(pattern="objectName:", tag)) %>%
-    select_("tag") 
+    select_("tag")
   lazyObjectName <- gsub(lazyObjectName$tag, pattern="objectName:", replacement="")
   return(lazyObjectName)
 
@@ -784,8 +784,8 @@ checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
 
 #' Copy a directory using Robocopy on Windows and rsync on linux
 #'
-#' This will copy an entire directory using the faster copy options in Windows and Linux. 
-#' The function will default to \code{file.copy} (which is slow). For lazyR databases, 
+#' This will copy an entire directory using the faster copy options in Windows and Linux.
+#' The function will default to \code{file.copy} (which is slow). For lazyR databases,
 #' this can be useful
 #' for copying everything to a new computer, a network location etc.
 #'
@@ -839,8 +839,8 @@ checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
 #' ls()
 #' unlink(toDir, recursive=TRUE)
 #' }
-copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE, 
-                        overwrite=TRUE, delDestination=FALSE, 
+copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
+                        overwrite=TRUE, delDestination=FALSE,
                         #copyRasterFile=TRUE, clearRepo=TRUE,
                         create=TRUE, silent=FALSE) {
 
@@ -853,17 +853,17 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
   if(os=="windows") {
     if(useRobocopy) {
       if(silent){
-        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(fromDir, winslash = "\\"), 
+        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(fromDir, winslash = "\\"),
                       "\\ ", normalizePath(toDir, winslash = "\\")))
       } else {
-        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"), 
+        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"),
                       "\\ ", normalizePath(toDir, winslash = "\\")))
-#         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"), 
+#         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"),
 #                       "\\ ", normalizePath(toDir, winslash = "\\"), "\\"))
       }
     } else {
-      file.copy(from = dir(fromDir), to = toDir, 
-                overwrite = overwrite, recursive=TRUE)  
+      file.copy(from = dir(fromDir), to = toDir,
+                overwrite = overwrite, recursive=TRUE)
     }
   } else if(os=="linux" | os == "darwin") {
     if(silent){
@@ -873,24 +873,24 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
     }
   }
   setwd(origDir)
-  return(invisible(toDir))  
+  return(invisible(toDir))
 }
 
 #' Copy a file using Robocopy on Windows and rsync on linux
 #'
-#' This will copy an individual file faster Robocopy in Windows and rsync in Linux. 
-#' The function will default to \code{file.copy} (which is slow). 
+#' This will copy an individual file faster Robocopy in Windows and rsync in Linux.
+#' The function will default to \code{file.copy} (which is slow).
 #'
 #' @param from The source file
 #'
 #' @param to The new file
-#' 
-#' @param useRobocopy For Windows, this will use a system call to Robocopy which appears to be much 
+#'
+#' @param useRobocopy For Windows, this will use a system call to Robocopy which appears to be much
 #' faster than the internal \code{file.copy} function. Uses /MIR flag.
 #'
 #' @param overwrite Passed to \code{file.copy}
-#' 
-#' @param delDestination Logical, whether the destination should have any files deleted, if they don't exist 
+#'
+#' @param delDestination Logical, whether the destination should have any files deleted, if they don't exist
 #' in the source. This is /purge
 #'
 #' @param create Passed to \code{checkLazyDir}
@@ -901,15 +901,11 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
 #' @author Eliot McIntire
 #' @rdname copyFile
 #' @export
-#' @examples
-#' \dontrun{
-#' }
-copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE, 
-                     overwrite=TRUE, delDestination=FALSE, 
+copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE,
+                     overwrite=TRUE, delDestination=FALSE,
                      #copyRasterFile=TRUE, clearRepo=TRUE,
                      create=TRUE, silent=FALSE) {
 
-  
   origDir <- getwd()
   #fromDir <- checkLazyDir(fromDir)
   #toDir <- checkLazyDir(toDir, create=create)
@@ -918,15 +914,15 @@ copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE,
   if(os=="windows") {
     if(useRobocopy) {
       if(silent){
-        system(paste0("robocopy ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", 
-                      normalizePath(dirname(from), winslash = "\\"), 
+        system(paste0("robocopy ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ",
+                      normalizePath(dirname(from), winslash = "\\"),
                       "\\ ", normalizePath(to, winslash = "\\"),
                       " ", basename(from)))
       } else {
-        system(paste0("robocopy ","/purge"[delDestination]," /ETA ", normalizePath(dirname(from), winslash = "\\"), 
+        system(paste0("robocopy ","/purge"[delDestination]," /ETA ", normalizePath(dirname(from), winslash = "\\"),
                       "\\ ", normalizePath(to, winslash = "\\"),
                       " ", basename(from)))
-        #         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"), 
+        #         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"),
         #                       "\\ ", normalizePath(toDir, winslash = "\\"), "\\"))
       }
     } else {
@@ -940,7 +936,7 @@ copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE,
     }
   }
   setwd(origDir)
-  return(invisible(to))  
+  return(invisible(to))
 }
 
 
@@ -1044,7 +1040,7 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
       })
     })
   })
-  
+
   digestCall <- digest(evaluated)
         #h1)}),x)) # includes object name, x
 
@@ -1070,7 +1066,7 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
   output <- lazy_eval(y)
   lazySave(output, lazyDir=lazyDir, objNames = x, tags=paste0("cacheId:", digestCall),
            overwrite=TRUE)
-  delayedAssign(x = x, value = output, eval.env = environment(), 
+  delayedAssign(x = x, value = output, eval.env = environment(),
                 assign.env = envir)
 }
 

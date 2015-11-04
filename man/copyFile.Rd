@@ -13,12 +13,12 @@ copyFile(from = NULL, to = NULL, useRobocopy = TRUE, overwrite = TRUE,
 
 \item{to}{The new file}
 
-\item{useRobocopy}{For Windows, this will use a system call to Robocopy which appears to be much 
+\item{useRobocopy}{For Windows, this will use a system call to Robocopy which appears to be much
 faster than the internal \code{file.copy} function. Uses /MIR flag.}
 
 \item{overwrite}{Passed to \code{file.copy}}
 
-\item{delDestination}{Logical, whether the destination should have any files deleted, if they don't exist 
+\item{delDestination}{Logical, whether the destination should have any files deleted, if they don't exist
 in the source. This is /purge}
 
 \item{create}{Passed to \code{checkLazyDir}}
@@ -26,12 +26,8 @@ in the source. This is /purge}
 \item{silent}{Should a progress be printed}
 }
 \description{
-This will copy an individual file faster Robocopy in Windows and rsync in Linux. 
+This will copy an individual file faster Robocopy in Windows and rsync in Linux.
 The function will default to \code{file.copy} (which is slow).
-}
-\examples{
-\dontrun{
-}
 }
 \author{
 Eliot McIntire
