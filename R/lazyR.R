@@ -59,7 +59,6 @@ if (getRversion() >= "3.1.0") {
 #' @importFrom archivist deleteRepo createEmptyRepo saveToRepo addTagsRepo
 #' @importFrom magrittr %>%
 #' @importFrom digest digest
-#' @importFrom SpaDES checkPath
 #' @importFrom utils getFromNamespace
 #' @examples
 #' a <- rnorm(10)
@@ -192,7 +191,6 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
 #' @importFrom dplyr select select_ filter distinct left_join distinct_
 #' @importFrom archivist showLocalRepo
 #' @importFrom magrittr %>%
-#' @importFrom SpaDES checkPath
 #' @examples
 #' \dontrun{
 #' tmpdir <- lazyDir(file.path(tempdir(), "lazyDir"), create=TRUE)
@@ -1056,10 +1054,18 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
       objNameInRepo <- lazyLs(digestCall, lazyDir=lazyDir)
       if(length(objNameInRepo)>1) objNameInRepo <- objNameInRepo[objNameInRepo %in% x]
       if(exists(x, envir=envir)) rm(list = x, envir=envir)
-        lazyLoad2(objNameInRepo, envir = envir)
-#        delayedAssign(x = x, value = get(lazyLs(digestCall), envir=environment()),
-#                      eval.env = environment(), assign.env = envir)
-        return(invisible())
+      lazyLoad2(objNameInRepo, envir = environment())
+      # next line is needed to be able to change the object name on assignment
+      tmp <- get(lazyLs(digestCall), envir=environment())
+      if(objNameInRepo != x) {
+        lazyRm(lazyLs(digestCall))
+        lazySave(tmp, lazyDir=lazyDir, objNames = x, tags=paste0("cacheId:", digestCall),
+                 overwrite=TRUE)
+      }
+      delayedAssign(x = x, value = tmp,
+                    eval.env = environment(), assign.env = envir)
+      
+      return(invisible())
     }
   }
 
@@ -1242,3 +1248,71 @@ lazyLoadFromRepo <- function(artifact, lazyDir=lazyDir(), objName, envir=parent.
   delayedAssign(objName, value = lazy_eval(loadedObj), assign.env = envir)
 }
 
+################################################################################
+#' Check filepath.
+#'
+#' Checks the specified filepath for formatting consistencies,
+#' such as trailing slashes, etc.
+#'
+#' @param path A character string corresponding to a filepath.
+#'
+#' @param create A logical indicating whether the path should
+#' be created if it doesn't exist. Default is \code{FALSE}.
+#'
+#' @return Character string denoting the cleaned up filepath.
+#'
+#' @seealso \code{\link{file.exists}}, \code{\link{dir.create}}.
+#'
+#' @docType methods
+#' @rdname checkPath
+#'
+# igraph exports %>% from magrittr
+setGeneric("checkPath", function(path, create) {
+  standardGeneric("checkPath")
+})
+
+#' @rdname checkPath
+setMethod("checkPath",
+          signature(path="character", create="logical"),
+          definition=function(path, create) {
+            if (length(path)!=1) {
+              stop("path must be a character vector of length 1.")
+            } else {
+              if (is.na(path)) {
+                stop("Invalid path: cannot be NA.")
+              } else {
+                path = normPath(path)
+                
+                if (!file.exists(path)) {
+                  if (create==TRUE) {
+                    dir.create(file.path(path), recursive=TRUE, showWarnings=FALSE)
+                  } else {
+                    stop(paste("Specified path", path, "doesn't exist.",
+                               "Create it and try again."))
+                  }
+                }
+                return(path)
+              }
+            }
+          })
+
+#' @rdname checkPath
+setMethod("checkPath",
+          signature(path="character", create="missing"),
+          definition=function(path) {
+            return(checkPath(path, create=FALSE))
+          })
+
+#' @rdname checkPath
+setMethod("checkPath",
+          signature(path="NULL", create="ANY"),
+          definition=function(path) {
+            stop("Invalid path: cannot be NULL.")
+          })
+
+#' @rdname checkPath
+setMethod("checkPath",
+          signature(path="missing", create="ANY"),
+          definition=function() {
+            stop("Invalid path: no path specified.")
+          })
