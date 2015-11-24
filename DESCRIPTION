@@ -26,6 +26,7 @@ Imports:
     digest,
     dplyr,
     lazyeval,
+    methods,
     magrittr,
     raster
 License: GPL-3
