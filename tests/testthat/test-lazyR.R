@@ -99,9 +99,6 @@ test_that("Test raster mechanisms", {
 #
 #     r %<% raster::raster(file.path(tempdir(),"r.tif"))
 #     ras %<% raster::raster(file.path(tempdir(),"ras.tif"))
-#     library(SpaDES)
-#     Plot(r, ras, new=T)
 #
-#   r
 
 })

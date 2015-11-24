@@ -40,7 +40,6 @@ if the filename can be found by looking in the relative path \code{/rasters/} be
 \code{lazyDir}.
 }
 \examples{
-library(SpaDES)
 tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
 obj <- rnorm(10)
 # save the obj

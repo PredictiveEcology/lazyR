@@ -298,7 +298,6 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' @importFrom raster raster
 #' @importFrom magrittr %>%
 #' @examples
-#' library(SpaDES)
 #' tmpdir <- checkPath(file.path(tempdir(), "lazyDir"), create=TRUE)
 #' obj <- rnorm(10)
 #' # save the obj
@@ -843,21 +842,26 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
                         create=TRUE, silent=FALSE) {
 
   origDir <- getwd()
-  #fromDir <- checkLazyDir(fromDir)
-  #toDir <- checkLazyDir(toDir, create=create)
+  fromDir <- checkLazyDir(fromDir)
+  toDir <- checkLazyDir(toDir, create=create)
   setwd(fromDir)
 
   os <- tolower(Sys.info()[["sysname"]])
   if(os=="windows") {
     if(useRobocopy) {
       if(silent){
-        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(fromDir, winslash = "\\"),
-                      "\\ ", normalizePath(toDir, winslash = "\\")))
+        tryCatch(system(paste0("robocopy /E ","/purge"[delDestination]," /ETA /NDL /NFL /NJH /NJS ", normalizePath(fromDir, winslash = "\\"),
+                      "\\ ", normalizePath(toDir, winslash = "\\"))),
+                 error=function(x)       file.copy(from = dir(fromDir), to = toDir,
+                                                   overwrite = overwrite, recursive=TRUE)
+        )
       } else {
-        system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"),
-                      "\\ ", normalizePath(toDir, winslash = "\\")))
-#         system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"),
-#                       "\\ ", normalizePath(toDir, winslash = "\\"), "\\"))
+        tryCatch(system(paste0("robocopy /E ","/purge"[delDestination]," /ETA ", normalizePath(fromDir, winslash = "\\"),
+                      "\\ ", normalizePath(toDir, winslash = "\\"))),
+                 error=function(x)       file.copy(from = dir(fromDir), to = toDir,
+                                                   overwrite = overwrite, recursive=TRUE)
+        )
+        
       }
     } else {
       file.copy(from = dir(fromDir), to = toDir,
@@ -865,9 +869,15 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
     }
   } else if(os=="linux" | os == "darwin") {
     if(silent){
-      system(paste0("rsync -aP ","--delete "[delDestination], fromDir, "/ ", toDir))
+      tryCatch(system(paste0("rsync -aP ","--delete "[delDestination], fromDir, "/ ", toDir)),
+               error=function(x)       file.copy(from = dir(fromDir), to = toDir,
+                                                 overwrite = overwrite, recursive=TRUE)
+      )
     } else {
-      system(paste0("rsync -avP ","--delete "[delDestination], fromDir, "/ ", toDir))
+      tryCatch(system(paste0("rsync -avP ","--delete "[delDestination], fromDir, "/ ", toDir)),
+               error=function(x)       file.copy(from = dir(fromDir), to = toDir,
+                                        overwrite = overwrite, recursive=TRUE)
+      )
     }
   }
   setwd(origDir)
@@ -1248,71 +1258,3 @@ lazyLoadFromRepo <- function(artifact, lazyDir=lazyDir(), objName, envir=parent.
   delayedAssign(objName, value = lazy_eval(loadedObj), assign.env = envir)
 }
 
-################################################################################
-#' Check filepath.
-#'
-#' Checks the specified filepath for formatting consistencies,
-#' such as trailing slashes, etc.
-#'
-#' @param path A character string corresponding to a filepath.
-#'
-#' @param create A logical indicating whether the path should
-#' be created if it doesn't exist. Default is \code{FALSE}.
-#'
-#' @return Character string denoting the cleaned up filepath.
-#'
-#' @seealso \code{\link{file.exists}}, \code{\link{dir.create}}.
-#'
-#' @docType methods
-#' @rdname checkPath
-#'
-# igraph exports %>% from magrittr
-setGeneric("checkPath", function(path, create) {
-  standardGeneric("checkPath")
-})
-
-#' @rdname checkPath
-setMethod("checkPath",
-          signature(path="character", create="logical"),
-          definition=function(path, create) {
-            if (length(path)!=1) {
-              stop("path must be a character vector of length 1.")
-            } else {
-              if (is.na(path)) {
-                stop("Invalid path: cannot be NA.")
-              } else {
-                path = normPath(path)
-                
-                if (!file.exists(path)) {
-                  if (create==TRUE) {
-                    dir.create(file.path(path), recursive=TRUE, showWarnings=FALSE)
-                  } else {
-                    stop(paste("Specified path", path, "doesn't exist.",
-                               "Create it and try again."))
-                  }
-                }
-                return(path)
-              }
-            }
-          })
-
-#' @rdname checkPath
-setMethod("checkPath",
-          signature(path="character", create="missing"),
-          definition=function(path) {
-            return(checkPath(path, create=FALSE))
-          })
-
-#' @rdname checkPath
-setMethod("checkPath",
-          signature(path="NULL", create="ANY"),
-          definition=function(path) {
-            stop("Invalid path: cannot be NULL.")
-          })
-
-#' @rdname checkPath
-setMethod("checkPath",
-          signature(path="missing", create="ANY"),
-          definition=function() {
-            stop("Invalid path: no path specified.")
-          })
