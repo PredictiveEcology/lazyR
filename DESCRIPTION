@@ -20,14 +20,14 @@ Depends:
     archivist (>= 1.8)
 Suggests:
     knitr,
-    testthat
+    testthat,
+    rgdal
 Imports:
     digest,
     dplyr,
     lazyeval,
     magrittr,
-    raster,
-    rgdal
+    raster
 License: GPL-3
 BugReports: https://github.com/PredictiveEcology/lazyR/issues
 ByteCompile: yes

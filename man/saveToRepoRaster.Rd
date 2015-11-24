@@ -6,7 +6,7 @@
 \title{Alternative to saveToRepo for rasters}
 \usage{
 saveToRepoRaster(obj, objName = NULL, lazyDir = NULL, tags = NULL,
-  compareRasterFileLength = 1e+06)
+  compareRasterFileLength = 1e+06, useRobocopy = TRUE)
 }
 \arguments{
 \item{obj}{The raster object to save to the repository.}
@@ -19,6 +19,9 @@ saveToRepoRaster(obj, objName = NULL, lazyDir = NULL, tags = NULL,
 
 \item{compareRasterFileLength}{Numeric. This is passed to the length arg in \code{digest}
 when determining if the Raster file is already in the database. Default 1e6. Passed to \code{lazySave}.}
+
+\item{useRobocopy}{Logical. For Windows only, this will use a system call to Robocopy which appears to be much
+faster than the internal \code{file.copy} function. Uses /MIR flag.}
 }
 \value{
 A raster object and its file backing will be passed to the archivist repository.
