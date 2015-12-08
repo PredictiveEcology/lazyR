@@ -138,7 +138,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
               saveToRepoRaster(obj, objName=objName, lazyDir=lazyDir,
                                          tags=tags, compareRasterFileLength=compareRasterFileLength)
           } else {
-            saveToRepo(obj, repoDir = lazyDir,
+            saveToRepo(artifact=obj, repoDir = lazyDir,
                        userTags = c(paste0("objectName:", objName), tags,
                                     paste0("class:", is(obj))))
           }
@@ -343,8 +343,6 @@ lazyLoad2 <- function(objNames=NULL, md5Hashes=NULL, lazyDir=NULL,
   oldFilePaths <- character()
 
   lapply(objNames, function(y) {
-#    browser()
-
     if (any(y == lazyLs(tag="class:Raster", lazyDir=lazyDir))) {
       if(is.null(md5Hashes)) {
         md5Hash <- lazyLs(tag=y, archivistCol="artifact", lazyDir=lazyDir,
@@ -1012,7 +1010,7 @@ copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE,
 #' system.time(a<-seq(1,1e6))
 #'
 #' lazyRm("a")
-assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environment(-1)) {
+assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=sys.frame(0)) {
 
   if(!is.character(x)) stop("x must be a character")
 
@@ -1048,7 +1046,6 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
 
   isInRepo <- localTags[localTags$tag == paste0("cacheId:", digestCall), , drop = FALSE]
 
-#  browser()
   if (nrow(isInRepo) > 0) {
     lastEntry <- max(isInRepo$createdDate)
     if (is.null(notOlderThan) || (notOlderThan < lastEntry)) {
@@ -1056,7 +1053,7 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
       objNameInRepo <- lazyLs(digestCall, lazyDir=lazyDir)
       if(length(objNameInRepo)>1) objNameInRepo <- objNameInRepo[objNameInRepo %in% x]
       if(exists(x, envir=envir)) rm(list = x, envir=envir)
-        lazyLoad2(objNameInRepo, envir = envir)
+        lazyLoad2(objNameInRepo, lazyDir=lazyDir, envir = envir)
 #        delayedAssign(x = x, value = get(lazyLs(digestCall), envir=environment()),
 #                      eval.env = environment(), assign.env = envir)
         return(invisible())
@@ -1237,7 +1234,6 @@ saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, compare
 #' @rdname lazyLoadFromRepo
 #' @export
 lazyLoadFromRepo <- function(artifact, lazyDir=lazyDir(), objName, envir=parent.frame(1)) {
-#  browser()
   loadedObj <- lazy(loadFromLocalRepo(force(artifact), lazyDir, value=TRUE))
   delayedAssign(objName, value = lazy_eval(loadedObj), assign.env = envir)
 }
