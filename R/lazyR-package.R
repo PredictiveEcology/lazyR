@@ -63,6 +63,3 @@
 #'   \code{\link{copyDir}} \tab Copy all files to new lazyR database location\cr
 #' }
 NULL
-
-#' @import methods
-NULL

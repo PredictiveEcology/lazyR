@@ -7,7 +7,7 @@
 \usage{
 lazySave(..., objNames = NULL, lazyDir = NULL, tags = NULL,
   clearRepo = FALSE, overwrite = FALSE, copyRasterFile = TRUE,
-  compareRasterFileLength = 1e+06, useRobocopy = TRUE)
+  compareRasterFileLength = 1e+06)
 }
 \arguments{
 \item{...}{Objects to save to an R lazy database, with metadata saved via archivist package repository.}
@@ -28,9 +28,6 @@ Default TRUE, which may be slow. See Details.}
 
 \item{compareRasterFileLength}{Numeric. This is passed to the length arg in \code{digest}
 when determining if the Raster file is already in the database. Default 1e6. See Details.}
-
-\item{useRobocopy}{Logical. For Windows only, this will use a system call to Robocopy which appears to be much
-faster than the internal \code{file.copy} function. Uses /MIR flag.}
 }
 \value{
 invisibly returns a character vector of objects saved.
