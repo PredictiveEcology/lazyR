@@ -427,6 +427,8 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL) {
 }
 
 
+
+
 #' Does an object exist in the lazyDir
 #'
 #' @param objNames A character vector indicating the object names to test
@@ -454,9 +456,9 @@ lazyIs <- function(objName, class2=NULL, removeCharacter=TRUE, lazyDir=NULL) {
 #' lazyExists("b") # error, does not exist
 #' unlink(file.path(tempdir(), "lazyDir"), recursive=TRUE)
 lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
-
+  
   lazyDir <- checkLazyDir(lazyDir)
-
+  
   out <- sapply(objNames, lazyLs, exact=exact)
   if(length(out) > 0) {
     return(objNames %in% out)
@@ -464,6 +466,3 @@ lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
     return(FALSE)
   }
 }
-
-
-
