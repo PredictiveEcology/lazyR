@@ -47,7 +47,7 @@ if (getRversion() >= "3.1.0") {
 #'
 #' @param compareRasterFileLength Numeric. This is passed to the length arg in \code{digest}
 #' when determining if the Raster file is already in the database. Default 1e6. See Details.
-#' 
+#'
 #' @param useRobocopy Logical. For Windows only, this will use a system call to Robocopy which appears to be much
 #' faster than the internal \code{file.copy} function. Uses /MIR flag.
 
@@ -79,10 +79,18 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
                      useRobocopy=TRUE) {
 
   objList <- list(...)
-
+  # This is a difficult part - if a list is passed, should it be saved as a list, or each
+  #  element? Well, it depends on the situation. Is there a way to
   if (is(objList[[1]], "list")) {
-    objList <- objList[[1]]
+    if(!is.null(objNames)) { # if objNames are provided
+      if(length(objNames) != length(objList)) {
+        objList <- objList[[1]]
+      } else {
+        names(objList) <- objNames
+      }
+    }
   }
+
 
   if(!is.null(objNames)) {
     if(length(objNames) != length(objList)) {
@@ -137,7 +145,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
           addTagsRepo(md5Hash, repoDir = lazyDir, tags = paste0("objectName:", objName))
         } else {
           if (is(obj, "Raster")) {
-              saveToRepoRaster(obj, objName=objName, lazyDir=lazyDir, tags=tags, 
+              saveToRepoRaster(obj, objName=objName, lazyDir=lazyDir, tags=tags,
                                compareRasterFileLength=compareRasterFileLength,
                                useRobocopy=useRobocopy)
           } else {
@@ -826,7 +834,7 @@ checkLazyDir <- function(lazyDir=NULL, create=TRUE) {
 #' # identify a new and old lazyLoad db
 #' fromDir <- file.path(tempdir(), "old")
 #' toDir <- file.path(tempdir(), "new")
-#' lazySave(obj1, r, ras, obj2, lazyDir=fromDir, overwrite=TRUE, 
+#' lazySave(obj1, r, ras, obj2, lazyDir=fromDir, overwrite=TRUE,
 #'    useRobocopy=FALSE)
 #'
 #' # copy to new lazyDir location
@@ -865,7 +873,7 @@ copyDir <- function(fromDir=NULL, toDir=NULL, useRobocopy=TRUE,
                  error=function(x)       file.copy(from = dir(fromDir), to = toDir,
                                                    overwrite = overwrite, recursive=TRUE)
         )
-        
+
       }
     } else {
       file.copy(from = dir(fromDir), to = toDir,
@@ -921,7 +929,7 @@ copyFile <- function(from=NULL, to=NULL, useRobocopy=TRUE,
   origDir <- getwd()
   #fromDir <- checkLazyDir(fromDir)
   #toDir <- checkLazyDir(toDir, create=create)
-  
+
   if(!dir.exists(to)) to <- dirname(to) # extract just the directory part
   os <- tolower(Sys.info()[["sysname"]])
   if(os=="windows") {
@@ -1077,7 +1085,7 @@ assignCache <- function(x, y, lazyDir=NULL, notOlderThan=NULL, envir=as.environm
       }
       delayedAssign(x = x, value = tmp,
                     eval.env = environment(), assign.env = envir)
-      
+
       return(invisible())
     }
   }
@@ -1167,7 +1175,7 @@ lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
 #'
 #' @param compareRasterFileLength Numeric. This is passed to the length arg in \code{digest}
 #' when determining if the Raster file is already in the database. Default 1e6. Passed to \code{lazySave}.
-#' 
+#'
 #' @param useRobocopy Logical. For Windows only, this will use a system call to Robocopy which appears to be much
 #' faster than the internal \code{file.copy} function. Uses /MIR flag.
 #'
@@ -1181,7 +1189,7 @@ lazyExists <- function(objNames, lazyDir=NULL, exact=TRUE) {
 #' @author Eliot McIntire
 #' @rdname saveToRepoRaster
 #' @export
-saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL, 
+saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL,
                              compareRasterFileLength=1e6,
                              useRobocopy=TRUE) {
 
@@ -1261,7 +1269,7 @@ saveToRepoRaster <- function(obj, objName=NULL, lazyDir=NULL, tags=NULL,
 #' @rdname lazyLoadFromRepo
 #' @export
 lazyLoadFromRepo <- function(artifact, lazyDir=lazyDir(), objName, envir=parent.frame(1)) {
-  # note: must use lazy function and lazy_eval because the delayed assign assigns "loadedObj" 
+  # note: must use lazy function and lazy_eval because the delayed assign assigns "loadedObj"
   #  which may have a different value when the object is eventually loaded via delayedAssign
   loadedObj <- lazy(loadFromLocalRepo(force(artifact), lazyDir, value=TRUE))
   delayedAssign(objName, value = lazy_eval(loadedObj), assign.env = envir)

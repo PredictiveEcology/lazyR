@@ -49,7 +49,7 @@ ras <- raster::raster(file.path(tempdir(),"ras.tif"))
 # identify a new and old lazyLoad db
 fromDir <- file.path(tempdir(), "old")
 toDir <- file.path(tempdir(), "new")
-lazySave(obj1, r, ras, obj2, lazyDir=fromDir, overwrite=TRUE, 
+lazySave(obj1, r, ras, obj2, lazyDir=fromDir, overwrite=TRUE,
    useRobocopy=FALSE)
 
 # copy to new lazyDir location
