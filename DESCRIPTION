@@ -27,8 +27,7 @@ Imports:
     lazyeval,
     magrittr,
     raster,
-    rgdal,
-    SpaDES
+    rgdal
 License: GPL-3
 BugReports: https://github.com/PredictiveEcology/lazyR/issues
 ByteCompile: yes
