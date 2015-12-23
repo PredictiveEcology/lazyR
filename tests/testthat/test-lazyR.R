@@ -70,9 +70,9 @@ test_that("Test raster mechanisms", {
   rm(r, envir = env)
   r <- raster(rasterFile)
   expect_equal(filename(r), rasterFile)
-  lazySave(r, overwrite = TRUE, useRobocopy=FALSE)
+  lazySave(r, overwrite = TRUE)
   rm(r, envir = env)
-  expect_false(exists("r", envir = env, inherits = FALSE))
+  expect_false(exists("r", envir = env))
   expect_message(lazyLoad2("r"), "1 objects loaded")
   fname <- file.path(dirname(rasterFile), "lazyDir", "rasters", basename(rasterFile)) %>%
     normalizePath(., winslash = "\\", mustWork = FALSE)

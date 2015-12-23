@@ -3,7 +3,7 @@
 \docType{methods}
 \name{lazyRm}
 \alias{lazyRm}
-\title{Load lazy objects from a \code{lazyR} database}
+\title{Remove lazy objects from a \code{lazyR} database}
 \usage{
 lazyRm(objNames = NULL, lazyDir = NULL, exact = TRUE,
   removeRasterFile = FALSE)
@@ -22,7 +22,7 @@ database entry. This is only true if the file is in the lazyDir}
 Nothing returned. This function is used for its side effects, i.e., loading lazy objects
 }
 \description{
-Load all named objects into the specified environment.
+Remove all named objects from the specified lazyDir.
 }
 \examples{
 \dontrun{

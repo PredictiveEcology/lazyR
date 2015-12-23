@@ -1,6 +1,6 @@
 Package: lazyR
 Title: Create Lazy Load Databases for R Objects
-Version: 0.0.11
+Version: 0.0.9
 Date: 2015-11-04
 Authors@R: c(
   person(c("Eliot", "J", "B"), "McIntire", email="eliotmcintire@gmail.com",
@@ -20,20 +20,24 @@ Depends:
     archivist (>= 1.8)
 Suggests:
     knitr,
-    testthat,
-    rgdal
+    testthat
 Imports:
     digest,
     dplyr,
     lazyeval,
-    methods,
     magrittr,
-    raster
+    raster,
+    rgdal
 License: GPL-3
 BugReports: https://github.com/PredictiveEcology/lazyR/issues
 ByteCompile: yes
 Collate:
     'lazyR-package.R'
-    'paths.R'
     'lazyR.R'
+    'cache.R'
+    'copy.R'
+    'lazyDir.R'
+    'raster.R'
+    'lazyLoad.R'
+    'paths.R'
 RoxygenNote: 5.0.1
