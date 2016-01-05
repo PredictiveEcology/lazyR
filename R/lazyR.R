@@ -255,7 +255,6 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 
   }
 
-  browser()
   if(sorted)
     outOrder <- gsub(x = firstRepoLs[, "tag"], pattern = tagType, replacement = "") %>% order
   else 
