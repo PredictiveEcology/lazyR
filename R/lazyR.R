@@ -171,12 +171,16 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
 #'
 #' @param tagType Some tags have prefixes, such as "class:".
 #' The search can be thus within a tagType if this is specified.
-#' If "all", then all tag types are returned.
+#' If "all", then all tag types are returned. The default is "objectName:", i.e., return
+#' the object name.
 #'
 #' @param archivistCol The name of the column to return from a showLocalRepo call.
 #' This can be "tag" or "artifact" or "createdDate".
 #'
 #' @param exact Logical. Should the tag matching be exact matching or not.
+#' 
+#' @param sorted Logical. Should the result be sorted by tagType. Default is TRUE, and thus
+#' result is sorted on objectName, regardless of which \code{archivistCol} is returned.
 #'
 #' If exact=TRUE is used, this is equivalent to a regexp expression with ^expr$.
 #'
@@ -217,7 +221,7 @@ lazySave <- function(..., objNames=NULL, lazyDir=NULL, tags=NULL, clearRepo=FALS
 lazyLs <- function(tag=NULL, lazyDir=NULL,
                    tagType="objectName:",
                    archivistCol="tag",
-                   exact=FALSE) {
+                   exact=FALSE, sorted=TRUE) {
 
   if (tagType=="all") {
     tagTypeAll <- TRUE
@@ -251,11 +255,15 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 
   }
 
+  browser()
+  if(sorted)
+    outOrder <- gsub(x = firstRepoLs[, "tag"], pattern = tagType, replacement = "") %>% order
+  else 
+    outOrder <- seq_len(NROW(firstRepoLs[,1]))
   if (tagTypeAll) {
-    out <- firstRepoLs
+    out <- firstRepoLs[outOrder,]
   } else {
-    out <- gsub(x = firstRepoLs[, archivistCol], pattern = tagType, replacement = "") %>%
-      sort
+    out <- gsub(x = firstRepoLs[, archivistCol], pattern = tagType, replacement = "")[outOrder] 
   }
   return(out)
 }
@@ -273,8 +281,15 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #'
 #' @param removeRasterFile Logical. If true then the source raster file will be removed in addition to the
 #' database entry. This is only true if the file is in the lazyDir
+#' 
+#' @param md5hash Character string. Remove object by its md5hash instead of is \code{objName}. See details.
 #'
 #' @return Nothing returned. This function is used for its side effects, i.e., loading lazy objects
+#' 
+#' @details As an alternative, the md5hash string can be used to remove objects. This may
+#' be helpful in cases where the objectNames have symbols in their \code{objNames}). If 
+#' the \code{md5hash} is provided, then \code{objNames} is ignored.
+#' 
 #'
 #' @seealso \code{\link{lazyLs}}, \code{\link{lazyLoad2}}
 #' @docType methods
@@ -289,10 +304,17 @@ lazyLs <- function(tag=NULL, lazyDir=NULL,
 #' lazySave(a, lazyDir=tempdir())
 #' lazyRm("a", lazyDir=tempdir())
 #' }
-lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FALSE) {
+lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FALSE,
+                   md5hash=NULL) {
 
   lazyDir <- checkLazyDir(lazyDir)
 
+  if(!is.null(md5hash)){
+    if(length(lazyObjectName(md5hash))==0) stop("That md5hash does not exist in the lazyDir")
+    rmFromRepo(md5hash=md5hash, repoDir = lazyDir)  
+    return(paste("Removed", md5hash))
+  }
+  
   if (is.null(objNames)) {
     objNames <- unique(lazyLs(lazyDir = lazyDir))
   }

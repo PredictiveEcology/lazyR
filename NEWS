@@ -1,5 +1,12 @@
 Known issues: https://github.com/PredictiveEcology/lazyR/issues
 
+version 0.0.10
+==============
+* Can now remove and list objects by md5hash (lazyLs and lazyRm)
+* lazyLs return is now sorted by default by object name, but this is now an argument
+which can be turned off. Previously, this was sorted alphabetically on the result, making
+different orders depending on which archivistCol was used.
+
 version 0.0.7
 =============
 * uses delayedAssign instead of makeLazyLoadDB, meaning the archivist package mechanism that saves rda files is sufficient.
