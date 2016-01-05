@@ -309,7 +309,7 @@ lazyRm <- function(objNames=NULL, lazyDir=NULL, exact=TRUE, removeRasterFile=FAL
   lazyDir <- checkLazyDir(lazyDir)
 
   if(!is.null(md5hash)){
-    if(length(lazyObjectName(md5hash))==0) stop("That md5hash does not exist in the lazyDir")
+    if(length(lazyObjectName(md5hash, lazyDir=lazyDir))==0) stop("That md5hash does not exist in the lazyDir")
     rmFromRepo(md5hash=md5hash, repoDir = lazyDir)  
     return(paste("Removed", md5hash))
   }
